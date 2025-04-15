@@ -14,7 +14,7 @@
     <li>Viernes</li>
   </div>
   <div>
-    <h1>Tabla de contenidos</h1>
+    <h1>Tabla de contenido</h1>
   </div>
 
 </template>
