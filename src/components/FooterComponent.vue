@@ -1,22 +1,10 @@
 <template>
-  <footer class="bg-blue-600 text-white py-6">
+  <footer class="bg-zinc-900 text-white py-6">
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <!-- Logo y descripción -->
-        <div class="col-span-1 md:col-span-1">
-          <div class="flex items-center space-x-2 mb-3">
-            <img class="h-8 w-8" src="" alt="Entrada App Logo" />
-            <h2 class="text-lg font-bold">Entrada App</h2>
-          </div>
-          <p class="text-blue-100 text-sm">
-            Sistema de control de entradas y salidas para organizaciones modernas
-          </p>
-        </div>
-
-        <!-- Enlaces rápidos -->
         <div class="col-span-1">
           <h3 class="text-lg font-semibold mb-4">Accesos rápidos</h3>
-          <ul class="space-y-2 text-blue-100">
+          <ul class="space-y-2 text-yellow-100">
             <li><a href="#" class="hover:text-white">Inicio</a></li>
             <li><a href="#" class="hover:text-white">Registrar entrada</a></li>
             <li><a href="#" class="hover:text-white">Registrar salida</a></li>
@@ -27,10 +15,8 @@
         <!-- Recursos -->
         <div class="col-span-1">
           <h3 class="text-lg font-semibold mb-4">Recursos</h3>
-          <ul class="space-y-2 text-blue-100">
+          <ul class="space-y-2 text-yellow-100">
             <li><a href="#" class="hover:text-white">Centro de ayuda</a></li>
-            <li><a href="#" class="hover:text-white">Documentación</a></li>
-            <li><a href="#" class="hover:text-white">API</a></li>
             <li><a href="#" class="hover:text-white">Contacto</a></li>
           </ul>
         </div>
@@ -38,7 +24,7 @@
         <!-- Contacto -->
         <div class="col-span-1">
           <h3 class="text-lg font-semibold mb-4">Contacto</h3>
-          <ul class="space-y-2 text-blue-100 text-sm">
+          <ul class="space-y-2 text-yellow-100 text-sm">
             <li class="flex items-start space-x-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -79,11 +65,11 @@
 
       <!-- Pie del footer -->
       <div
-        class="border-t border-blue-500 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center"
+        class="border-t border-amber-500 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center"
       >
-        <p class="text-sm text-blue-200">© 2025 Entrada App. Todos los derechos reservados.</p>
+        <p class="text-sm text-amber-200">© 2025 Entrada App. Todos los derechos reservados.</p>
         <div class="flex space-x-4 mt-4 md:mt-0">
-          <a href="#" class="text-blue-200 hover:text-white">
+          <a href="#" class="text-amber-200 hover:text-white">
             <span class="sr-only">Facebook</span>
             <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -93,7 +79,7 @@
               />
             </svg>
           </a>
-          <a href="#" class="text-blue-200 hover:text-white">
+          <a href="#" class="text-amber-200 hover:text-white">
             <span class="sr-only">Twitter</span>
             <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -101,7 +87,7 @@
               />
             </svg>
           </a>
-          <a href="#" class="text-blue-200 hover:text-white">
+          <a href="#" class="text-amber-200 hover:text-white">
             <span class="sr-only">Instagram</span>
             <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
