@@ -29,6 +29,11 @@ const router = createRouter({
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
     },
+    {
+      path: '/agenda',
+      name: 'agenda',
+      component: () => import('../views/AgendaView.vue'),
+    },
   ],
 })
 

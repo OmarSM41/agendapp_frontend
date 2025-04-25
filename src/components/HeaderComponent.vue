@@ -9,15 +9,14 @@
       <!-- Navegación principal -->
       <nav class="hidden md:flex space-x-6">
         <a href="/" class="text-white hover:text-purple-100 font-medium">Inicio</a>
-        <a href="/dashboard" class="text-white hover:text-purple-100 font-medium">Dashboard</a>
-        <a href="/usuarios" class="text-white hover:text-purple-100 font-medium">Registros</a>
+        <a href="/agenda" class="text-white hover:text-purple-100 font-medium">Agenda</a>
       </nav>
 
       <!-- Botones adicionales -->
       <div class="flex items-center space-x-3">
         <template v-if="auth.isAuthenticated">
           <div class="relative flex items-center space-x-3">
-            <span class="text-white font-medium">Bienvenido, {{ auth.nombre }}</span>
+            <span class="text-white font-medium">Hola, {{ auth.nombre }}</span>
             <button
               @click="cerrarSesion"
               class="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-md font-medium shadow-sm"
@@ -69,8 +68,6 @@
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
-
-
 
 
 export default {

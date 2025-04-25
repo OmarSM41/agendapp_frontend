@@ -5,10 +5,8 @@
         <div class="col-span-1">
           <h3 class="text-lg font-semibold mb-4">Accesos rápidos</h3>
           <ul class="space-y-2 text-yellow-100">
-            <li><a href="#" class="hover:text-white">Inicio</a></li>
-            <li><a href="#" class="hover:text-white">Registrar entrada</a></li>
-            <li><a href="#" class="hover:text-white">Registrar salida</a></li>
-            <li><a href="#" class="hover:text-white">Reportes</a></li>
+            <li><a href="/" class="hover:text-white">Inicio</a></li>
+            <li><a href="/agenda" class="hover:text-white">Agenda</a></li>
           </ul>
         </div>
 
