@@ -1,24 +1,46 @@
+
 <template>
-  <div class="p-6 bg-gray-100">
-    <h1 class="text-2xl font-bold mb-4 text-gray-800">Tabla de contenido</h1>
-    <table class="table-auto border-collapse border border-gray-300 w-full text-left">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="border border-gray-300 px-4 py-2">Hora</th>
-          <th class="border border-gray-300 px-4 py-2">Lunes</th>
-          <th class="border border-gray-300 px-4 py-2">Martes</th>
-          <th class="border border-gray-300 px-4 py-2">Miercoles</th>
-          <th class="border border-gray-300 px-4 py-2">Jueves</th>
-          <th class="border border-gray-300 px-4 py-2">Viernes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="row in 10" :key="row" class="odd:bg-white even:bg-gray-50">
-          <td v-for="col in 6" :key="col" class="border border-gray-300 px-4 py-2">
-            Algo
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="dashboard-view">
+    <h1>Dashboard</h1>
+    <div class="stats">
+      <div class="stat-card" v-for="stat in stats" :key="stat.id">
+        <h2>{{ stat.title }}</h2>
+        <p>{{ stat.value }}</p>
+      </div>
+    </div>
   </div>
 </template>
+
+<script lang="ts">
+export default {
+  name: "DashboardView",
+  data() {
+    return {
+      stats: [
+        { id: 1, title: "Users", value: 120 },
+        { id: 2, title: "Sales", value: "$5,000" },
+        { id: 3, title: "Orders", value: 45 },
+      ],
+    };
+  },
+};
+</script>
+
+<style scoped>
+.dashboard-view {
+  padding: 20px;
+}
+
+.stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat-card {
+  background: #f4f4f4;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+</style>

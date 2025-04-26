@@ -1,110 +1,92 @@
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-r from-orange-200 to-gray-200"
-  >
-    <div class="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Registrar</h2>
-      <form @submit.prevent="registerUser">
-        <div class="mb-4">
-          <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
-          <input
-            type="text"
-            id="name"
-            v-model="form.nombre"
-            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Ingresa tu nombre"
-            required
-          />
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+      <h2 class="text-3xl font-bold text-center mb-6">Crear cuenta</h2>
+
+      <form @submit.prevent="registrarUsuario" class="space-y-4">
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Nombre</label>
+          <input v-model="nombre" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" required />
         </div>
 
-        <div class="mb-4">
-          <label for="email" class="block text-sm font-medium text-gray-700"
-            >Correo Electrónico</label
-          >
-          <input
-            type="email"
-            id="email"
-            v-model="form.correo"
-            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm"
-            placeholder="Ingresa tu correo"
-            required
-          />
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Apellido</label>
+          <input v-model="apellido" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" required />
         </div>
 
-        <div class="mb-4">
-          <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
-          <input
-            type="password"
-            id="password"
-            v-model="form.contraseña"
-            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm"
-            placeholder="Ingresa tu contraseña"
-            required
-          />
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Correo</label>
+          <input v-model="correo" type="email" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" required />
         </div>
 
-        <div class="mb-4">
-          <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
-          <select
-            id="rol"
-            v-model="form.rol"
-            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm"
-            required
-          >
-            <option value="Usuario">Usuario</option>
-            <option value="Profesor">Profesor</option>
-          </select>
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Contraseña</label>
+          <input v-model="contraseña" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" required />
         </div>
 
-        <button
-          type="submit"
-          class="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Registrar
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1">Confirmar contraseña</label>
+          <input v-model="confirmacionContraseña" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+        </div>
+
+        <div v-if="error" class="text-red-500 text-sm">{{ error }}</div>
+
+        <button type="submit" class="w-full bg-orange-600 hover:bg-orange-800 text-white font-semibold py-2 rounded-xl transition duration-200">
+          Registrarse
         </button>
-
-        <p class="mt-4 text-sm text-center text-gray-600">
-          ¿Ya tienes una cuenta?
-          <a href="/login" class="text-blue-500 hover:underline">Inicia Sesión</a>
-        </p>
       </form>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, reactive } from 'vue'
-import api from '@/api'
-import { useRouter } from 'vue-router';
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-export default defineComponent({
-  setup() {
-    const router = useRouter();
+const router = useRouter()
 
-    const form = reactive({
-      nombre: '',
-      correo: '',
-      contraseña: '',
-      rol: 'Usuario',
+const nombre = ref('')
+const apellido = ref('')
+const correo = ref('')
+const contraseña = ref('')
+const confirmacionContraseña = ref('')
+const error = ref('')
+
+const registrarUsuario = async () => {
+  if (contraseña.value !== confirmacionContraseña.value) {
+    error.value = 'Las contraseñas no coinciden'
+    return
+  }
+
+  try {
+    const response = await fetch('https://localhost:7062/api/Usuario/Auth/Register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        nombre: nombre.value,
+        apellido: apellido.value,
+        correo: correo.value,
+        contraseña: contraseña.value,
+        confirmacionContraseña: confirmacionContraseña.value
+      })
     })
 
-    const registerUser = async () => {
-      try {
-        const response = await api.post('/auth/register', form)
-        alert('Registro exitoso')
-        router.push('/login');
-        console.log(response.data)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        alert('Error al registrar: ' + (error.response?.data?.mensaje || 'Inténtalo de nuevo'))
-        console.error(error)
-      }
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Error en el registro:', errorData)
+      throw new Error(errorData.message || 'Error al registrar')
     }
 
-    return {
-      form,
-      registerUser,
-    }
-  },
-})
+    const data = await response.json()
+    console.log('Usuario registrado exitosamente:', data)
+    alert('Registro exitoso ✅')
+    router.push('/login')
+  } catch (err) {
+    console.error('Error:', err.message)
+    error.value = err.message
+  }
+}
 </script>
+
