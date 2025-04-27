@@ -1,297 +1,245 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-2xl font-bold mb-4">Agenda del Profesor</h1>
+  <div class="agenda-calendar p-4">
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full table-auto border-collapse">
-        <thead>
-          <tr>
-            <th class="border p-2 w-24">Hora</th>
-            <th v-for="dia in dias" :key="dia" class="border p-2 text-center">
-              {{ dia }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="hora in horas" :key="hora">
-            <td class="border p-2 text-sm font-medium">{{ hora }}</td>
-            <td v-for="dia in dias" :key="dia" class="border p-2 h-16">
-              <div class="relative h-full">
-                <div
-                  v-if="tareas[dia] && tareas[dia][hora]"
-                  class="bg-orange-200 rounded p-2 text-sm h-full flex flex-col justify-between"
-                >
-                  <span>{{ tareas[dia][hora].tema }}</span>
-                  <div class="flex justify-end space-x-2 mt-2 text-xs">
-                    <button @click="verDetalles(dia, hora)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                      Ver
-                    </button>
-                    <button
-                      @click="confirmarEliminacion(() => eliminarTarea(dia, hora))"
-                      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
+    <!-- Calendario -->
+    <FullCalendar
+      :options="calendarOptions"
+      class="shadow rounded p-4 mb-8"
+    />
+
+    <!-- Tabla de horarios -->
+    <div v-if="selectedDate" class="mt-8">
+      <h2 class="text-xl font-semibold mb-4">Horario para: {{ formatDate(selectedDate) }}</h2>
+
+      <div class="overflow-auto">
+        <table class="min-w-full bg-white border">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="border p-2">Hora</th>
+              <th class="border p-2" v-for="day in daysOfWeek" :key="day">{{ day }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="hour in hours" :key="hour">
+              <td class="border p-2 font-semibold">{{ hour }}</td>
+              <td
+                class="border p-2 hover:bg-gray-100 cursor-pointer"
+                v-for="day in daysOfWeek" :key="day"
+                @click="openAssignModal(day, hour)"
+              >
+                <div v-if="getTask(selectedDate, day, hour)">
+                  <p class="text-sm font-bold">{{ getTask(selectedDate, day, hour)?.tema }}</p>
+                  <p class="text-xs">{{ getTask(selectedDate, day, hour)?.actividad }}</p>
                 </div>
-                <button
-                  v-else
-                  @click="abrirModal(dia, hora)"
-                  class="text-sm text-gray-500 hover:text-gray-700 w-full h-full"
-                >
-                  + Añadir tarea
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal para crear tarea -->
-    <div
-      v-if="modalAbierto"
-      class="fixed inset-0 bg-gray-950/50 flex items-center justify-center z-50"
-    >
-      <div class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-        <h2 class="text-lg font-semibold mb-4 text-center">Agregar Tarea</h2>
-
-        <div class="space-y-4">
-          <input
-            v-model="formTarea.tema"
-            type="text"
-            placeholder="Tema"
-            class="border w-full p-2 rounded"
-          />
-          <textarea
-            v-model="formTarea.descripcion"
-            placeholder="Descripción"
-            class="border w-full p-2 h-20 rounded resize-none"
-          ></textarea>
-          <input
-            v-model="formTarea.tarea"
-            type="text"
-            placeholder="Tarea"
-            class="border w-full p-2 rounded"
-          />
-          <textarea
-            v-model="formTarea.actividades"
-            placeholder="Actividades"
-            class="border w-full p-2 h-20 rounded resize-none"
-          ></textarea>
-          <input
-            v-model="formTarea.lugar"
-            type="text"
-            placeholder="Lugar de la universidad"
-            class="border w-full p-2 rounded"
-          />
-          <input
-            v-model="formTarea.grupo"
-            type="text"
-            placeholder="Grupo"
-            class="border w-full p-2 rounded"
-          />
-        </div>
-
-        <div class="flex justify-center space-x-4 mt-6">
-          <button
-            @click="guardarTarea"
-            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          >
-            Guardar
-          </button>
-          <button
-            @click="modalAbierto = false"
-            class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Cancelar
-          </button>
-        </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Modal de Detalles -->
-<div v-if="modalDetallesAbierto" class="fixed inset-0 bg-gray-950/50 flex items-center justify-center z-50">
-  <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-left">
-    <h2 class="text-lg font-semibold mb-4 text-center">Detalles de la Tarea</h2>
-    <div class="space-y-2 text-sm">
-      <p><strong>Tema:</strong> {{ detalleActual?.tema }}</p>
-      <p><strong>Descripción:</strong><br/> {{ detalleActual?.descripcion }}</p>
-      <p><strong>Tarea:</strong> {{ detalleActual?.tarea }}</p>
-      <p><strong>Actividades:</strong><br/> {{ detalleActual?.actividades }}</p>
-      <p><strong>Lugar:</strong> {{ detalleActual?.lugar }}</p>
-      <p><strong>Grupo:</strong> {{ detalleActual?.grupo }}</p>
-    </div>
-    <div class="flex justify-center mt-6">
-      <button @click="modalDetallesAbierto = false" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        Cerrar
-      </button>
-    </div>
+    <!-- Modal de asignar tarea -->
+<div v-if="showAssignModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+  <div class="bg-white p-6 rounded shadow-lg w-96">
+    <h2 class="text-lg font-semibold mb-4">Asignar tarea</h2>
+
+    <form @submit.prevent="saveTask">
+      <!-- Tema -->
+      <div class="mb-4">
+        <label class="block mb-1">Tema</label>
+        <select v-model="taskForm.temaId" class="border p-2 rounded w-full" required>
+          <option value="" disabled selected>Seleccione un tema</option>
+          <option v-for="tema in temas" :key="tema.id" :value="tema.id">
+            {{ tema.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Descripción -->
+      <div class="mb-4">
+        <label class="block mb-1">Descripción</label>
+        <input v-model="taskForm.descripcion" type="text" class="border p-2 rounded w-full" placeholder="Descripción">
+      </div>
+
+      <!-- Tarea -->
+      <div class="mb-4">
+        <label class="block mb-1">Tarea</label>
+        <input v-model="taskForm.tarea" type="text" class="border p-2 rounded w-full" placeholder="Tarea">
+      </div>
+
+      <!-- Actividades (Opcional: puedes agregar un campo más si manejas actividades directamente aquí) -->
+
+      <!-- Lugar -->
+      <div class="mb-4">
+        <label class="block mb-1">Lugar</label>
+        <input v-model="taskForm.lugar" type="text" class="border p-2 rounded w-full" placeholder="Lugar (Edificio)">
+      </div>
+
+      <!-- Grupo -->
+      <div class="mb-4">
+        <label class="block mb-1">Grupo</label>
+        <select v-model="taskForm.grupoId" class="border p-2 rounded w-full" required>
+          <option value="" disabled selected>Seleccione un grupo</option>
+          <option v-for="grupo in grupos" :key="grupo.id" :value="grupo.id">
+            {{ grupo.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end space-x-2">
+        <button type="button" @click="closeAssignModal" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded">
+          Cancelar
+        </button>
+        <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded">
+          Guardar
+        </button>
+      </div>
+    </form>
+
   </div>
 </div>
 
-
-    <!-- Modal de confirmación -->
-    <div
-      v-if="mostrarConfirmacion"
-      class="fixed inset-0 bg-gray-950/50 flex items-center justify-center z-50"
-    >
-      <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm w-full">
-        <h2 class="text-lg font-semibold mb-4">¿Eliminar tarea?</h2>
-        <p class="mb-6">Esta acción no se puede deshacer.</p>
-        <div class="flex justify-center space-x-4">
-          <button
-            @click="
-              () => {
-                onConfirmarEliminacion()
-                mostrarConfirmacion = false
-              }
-            "
-            class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-          >
-            Eliminar
-          </button>
-          <button
-            @click="mostrarConfirmacion = false"
-            class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400"
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted, watch } from 'vue'
+<script setup lang="ts">
+// Imports
+import { onMounted, ref } from 'vue';
+import FullCalendar from '@fullcalendar/vue3';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import esLocale from '@fullcalendar/core/locales/es';
+import axios from 'axios';
 
-interface DetalleTarea {
-  tema: string
-  descripcion: string
-  tarea: string
-  actividades: string
-  lugar: string
-  grupo: string
+// Variables
+const selectedDate = ref<string | null>(null);
+const showModal = ref(false);
+const selectedDay = ref('');
+const selectedHour = ref('');
+const tasks = ref([]);
+const temas = ref([]);
+const grupos = ref([]);
+
+const taskForm = ref({
+  hora: '',
+  temaId: null,
+  descripcion: '',
+  tarea: '',
+  lugar: '',
+  grupoId: null
+});
+
+// Cargar temas
+const fetchTemas = async () => {
+  try {
+    const response = await axios.get('https://localhost:7063/api/Tema'); 
+    temas.value = response.data;
+  } catch (error) {
+    console.error('Error cargando temas:', error);
+  }
+};
+
+// Cargar grupos
+const fetchGrupos = async () => {
+  try {
+    const response = await axios.get('https://localhost:7063/api/Grupo');
+    grupos.value = response.data;
+  } catch (error) {
+    console.error('Error cargando grupos:', error);
+  }
+};
+
+// Cargar al montar la vista
+onMounted(() => {
+  fetchTemas();
+  fetchGrupos();
+});
+
+// Opciones del calendario
+const calendarOptions = ref({
+  plugins: [dayGridPlugin, interactionPlugin],
+  initialView: 'dayGridMonth',
+  locale: esLocale,
+  events: [],
+  eventColor: '#4F46E5',
+  dateClick: (info) => {
+    selectedDate.value = info.dateStr;
+  },
+});
+
+// Horas de la tabla
+const hours = [
+  "07:00", "08:00", "09:00", "10:00", "11:00",
+  "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"
+];
+
+// Días de la semana
+const daysOfWeek = ["Tarea"];
+
+// Función para formatear fecha
+const formatDate = (dateStr: string) => {
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateStr).toLocaleDateString('es-ES', options);
+};
+
+// Abrir el modal
+function openAssignModal(day: string, hour: string) {
+  selectedDay.value = day;
+  selectedHour.value = hour;
+  showModal.value = true;
 }
 
-export default defineComponent({
-  setup() {
-    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-    const horas = [
-      '07:00 - 7:50',
-      '07:50 - 8:40',
-      '08:40 - 9:30',
-      '10:00 - 10:50',
-      '10:50 - 11:40',
-      '11:40 - 12:30',
-      '12:50 - 13:40',
-      '13:40 - 14:30',
-      '14:30 - 15:20',
-      '15:20 - 16:10',
-      '16:40 - 17:30',
-      '17:30 - 18:20',
-      '18:20 - 19:10',
-      '19:10 - 20:00',
-      '20:00 - 20:50',
-      '20:50 - 21:40',
-    ]
+const currentUserId = 1;
 
-    const tareas = ref<Record<string, Record<string, DetalleTarea>>>({})
+// Guardar la tarea
+const saveTask = async () => {
+  if (!taskForm.value.temaId || !taskForm.value.grupoId) {
+    alert('Tema y Grupo son obligatorios');
+    return;
+  }
 
-    const modalAbierto = ref(false)
-    const modalDia = ref('')
-    const modalHora = ref('')
-    const formTarea = ref<DetalleTarea>({
-      tema: '',
+  const fechaCompleta = selectedDate.value + 'T' + taskForm.value.hora; // Ej: '2025-04-25T07:00'
+
+  const newTask = {
+    fecha: fechaCompleta,
+    descripcion: taskForm.value.descripcion,
+    tarea: taskForm.value.tarea,
+    edificio: taskForm.value.lugar,
+    grupoId: taskForm.value.grupoId,
+    temaId: taskForm.value.temaId,
+    usuarioId: currentUserId
+  };
+
+  try {
+    const response = await axios.post('http://localhost:7062/api/Horario', newTask);
+    console.log('Horario creado correctamente:', response.data);
+    alert('Tarea guardada');
+    // Aquí podrías limpiar el formulario si quieres:
+    taskForm.value = {
+      hora: '',
+      temaId: null,
       descripcion: '',
       tarea: '',
-      actividades: '',
       lugar: '',
-      grupo: '',
-    })
+      grupoId: null
+    };
+  } catch (error) {
+    console.error('Error al guardar la tarea:', error);
+    alert('Error al guardar la tarea');
+  }
+};
 
-    const modalDetallesAbierto = ref(false)
-const detalleActual = ref<DetalleTarea | null>(null)
-
-const verDetalles = (dia: string, hora: string) => {
-  detalleActual.value = tareas.value[dia][hora]
-  modalDetallesAbierto.value = true
+// Buscar tarea en una celda
+function getTask(date: string, day: string, hour: string) {
+  return tasks.value.find(task => task.fecha === date && task.dia === day && task.hora === hour);
 }
-
-    const mostrarConfirmacion = ref(false)
-    const onConfirmarEliminacion = ref<() => void>(() => {})
-
-    const guardarTareasEnLocalStorage = () => {
-      localStorage.setItem('agendaTareas', JSON.stringify(tareas.value))
-    }
-
-    onMounted(() => {
-      const datos = localStorage.getItem('agendaTareas')
-      if (datos) {
-        tareas.value = JSON.parse(datos)
-      }
-    })
-
-    watch(tareas, guardarTareasEnLocalStorage, { deep: true })
-
-    const abrirModal = (dia: string, hora: string) => {
-      modalDia.value = dia
-      modalHora.value = hora
-      const tareaExistente = tareas.value[dia]?.[hora]
-      formTarea.value = tareaExistente
-        ? { ...tareaExistente }
-        : {
-            tema: '',
-            descripcion: '',
-            tarea: '',
-            actividades: '',
-            lugar: '',
-            grupo: '',
-          }
-      modalAbierto.value = true
-    }
-
-    const guardarTarea = () => {
-      if (!tareas.value[modalDia.value]) {
-        tareas.value[modalDia.value] = {}
-      }
-      tareas.value[modalDia.value][modalHora.value] = { ...formTarea.value }
-      modalAbierto.value = false
-    }
-
-    const confirmarEliminacion = (callback: () => void) => {
-      onConfirmarEliminacion.value = callback
-      mostrarConfirmacion.value = true
-    }
-
-    const eliminarTarea = (dia: string, hora: string) => {
-      if (tareas.value[dia] && tareas.value[dia][hora]) {
-        delete tareas.value[dia][hora]
-        if (Object.keys(tareas.value[dia]).length === 0) {
-          delete tareas.value[dia]
-        }
-      }
-    }
-
-    return {
-      dias,
-      horas,
-      tareas,
-      modalAbierto,
-      modalDia,
-      modalHora,
-      formTarea,
-      abrirModal,
-      guardarTarea,
-      eliminarTarea,
-      verDetalles,
-      mostrarConfirmacion,
-      confirmarEliminacion,
-      onConfirmarEliminacion,
-      modalDetallesAbierto,
-      detalleActual
-    }
-  },
-})
 </script>
+
+<style scoped>
+.agenda-calendar {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+</style>
+

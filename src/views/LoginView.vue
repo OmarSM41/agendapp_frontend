@@ -50,8 +50,8 @@ const handleLogin = async () => {
   const result = await auth.login(correo.value, contraseña.value)
   if (result.success) {
     console.log('Inicio de sesión exitoso:')
-    alert('Inicio de sesión exitoso')
-    router.push('/') // o donde desees redirigir
+
+    router.push('/')
   } else {
     console.error('Error al iniciar sesión:', result.message)
     error.value = result.message
