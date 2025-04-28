@@ -338,14 +338,15 @@ const saveTask = async () => {
   const fechaCompleta = selectedDate.value + 'T' + taskForm.value.hora
 
   const newTask = {
-    fecha: fechaCompleta,
-    descripcion: taskForm.value.descripcion.trim(),
-    tarea: taskForm.value.tarea.trim(),
-    edificio: taskForm.value.lugar.trim(),
-    grupoId: taskForm.value.grupoId,
-    temaId: taskForm.value.temaId,
-    usuarioId: authStore.usuarioId, 
-  }
+  fecha: fechaCompleta,
+  descripcion: taskForm.value.descripcion.trim(),
+  tarea: taskForm.value.tarea.trim(),
+  edificio: taskForm.value.lugar.trim(), // ← Aquí sí debe ser edificio
+  grupoId: taskForm.value.grupoId,
+  temaId: taskForm.value.temaId,
+  usuarioId: authStore.usuarioId,
+};
+
 
   try {
     const response = await axios.post('https://localhost:7062/api/Horario', newTask)
