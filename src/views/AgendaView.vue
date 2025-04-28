@@ -28,8 +28,8 @@
                 @click="openAssignModal(day, hour)"
               >
                 <div v-if="getTask(selectedDate, day, hour)">
-                  <p class="text-sm font-bold">{{ getTask(selectedDate, day, hour)?.tema }}</p>
-                  <p class="text-xs">{{ getTask(selectedDate, day, hour)?.actividad }}</p>
+                  <p class="text-sm font-bold">{{ getTask(selectedDate, day, hour).tema }}</p>
+                  <p class="text-xs">{{ getTask(selectedDate, day, hour).actividad }}</p>
                 </div>
               </td>
             </tr>
@@ -39,7 +39,7 @@
     </div>
 
     <!-- Modal de asignar tarea -->
-<div v-if="showAssignModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+<div v-if="showAssignModal" class="fixed inset-0 bg-gray-500/50 flex justify-center items-center z-50">
   <div class="bg-white p-6 rounded shadow-lg w-96">
     <h2 class="text-lg font-semibold mb-4">Asignar tarea</h2>
 
@@ -111,15 +111,19 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import axios from 'axios';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+
 
 // Variables
 const selectedDate = ref<string | null>(null);
-const showModal = ref(false);
 const selectedDay = ref('');
 const selectedHour = ref('');
 const tasks = ref([]);
 const temas = ref([]);
 const grupos = ref([]);
+const showAssignModal = ref(false);
+
 
 const taskForm = ref({
   hora: '',
@@ -130,30 +134,48 @@ const taskForm = ref({
   grupoId: null
 });
 
-// Cargar temas
-const fetchTemas = async () => {
-  try {
-    const response = await axios.get('https://localhost:7063/api/Tema'); 
-    temas.value = response.data;
-  } catch (error) {
-    console.error('Error cargando temas:', error);
-  }
-};
-
-// Cargar grupos
-const fetchGrupos = async () => {
-  try {
-    const response = await axios.get('https://localhost:7063/api/Grupo');
-    grupos.value = response.data;
-  } catch (error) {
-    console.error('Error cargando grupos:', error);
-  }
-};
-
 // Cargar al montar la vista
-onMounted(() => {
-  fetchTemas();
-  fetchGrupos();
+onMounted(async () => {
+  try {
+
+
+    // Temas
+    const temasResponse = await axios.get('https://localhost:7062/api/Tema');
+    temas.value = temasResponse.data;
+
+    // Grupos
+    const gruposResponse = await axios.get('https://localhost:7062/api/Grupo');
+    grupos.value = gruposResponse.data;
+
+    // Horarios
+    const horariosResponse = await axios.get('https://localhost:7062/api/Horario');
+    const horarios = horariosResponse.data;
+
+    tasks.value = horarios.map(horario => {
+      const fechaObj = parseISO(horario.fecha);
+      const diaSemana = format(fechaObj, 'EEEE', { locale: es });
+      const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+
+      return {
+        fecha: horario.fecha.split('T')[0], // solo la fecha YYYY-MM-DD
+        dia: diaFormateado,
+        hora: horario.fecha.split('T')[1]?.substring(0,5) || '',
+        tema: temas.value.find(t => t.id === horario.temaId)?.nombre || '',
+        actividad: horario.tarea,
+      };
+    });
+
+    // eventos al calendario
+    calendarOptions.value.events = horarios.map(horario => ({
+      title: horario.tarea,
+      start: horario.fecha,
+      allDay: true,
+    }));
+
+  } catch (error) {
+    console.error('Error al cargar los horarios:', error);
+    alert('Error al cargar los horarios');
+  }
 });
 
 // Opciones del calendario
@@ -168,6 +190,8 @@ const calendarOptions = ref({
   },
 });
 
+
+
 // Horas de la tabla
 const hours = [
   "07:00", "08:00", "09:00", "10:00", "11:00",
@@ -175,7 +199,7 @@ const hours = [
 ];
 
 // Días de la semana
-const daysOfWeek = ["Tarea"];
+const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 // Función para formatear fecha
 const formatDate = (dateStr: string) => {
@@ -187,19 +211,25 @@ const formatDate = (dateStr: string) => {
 function openAssignModal(day: string, hour: string) {
   selectedDay.value = day;
   selectedHour.value = hour;
-  showModal.value = true;
+  taskForm.value.hora = hour;
+  showAssignModal.value = true;
+}
+
+// Cerrar el modal
+function closeAssignModal() {
+  showAssignModal.value = false;
 }
 
 const currentUserId = 1;
 
 // Guardar la tarea
 const saveTask = async () => {
-  if (!taskForm.value.temaId || !taskForm.value.grupoId) {
-    alert('Tema y Grupo son obligatorios');
+  if (!taskForm.value.temaId || !taskForm.value.grupoId || !taskForm.value.tarea.trim) {
+    alert('Tema, Grupo y Tarea son obligatorios');
     return;
   }
 
-  const fechaCompleta = selectedDate.value + 'T' + taskForm.value.hora; // Ej: '2025-04-25T07:00'
+  const fechaCompleta = selectedDate.value + 'T' + taskForm.value.hora;
 
   const newTask = {
     fecha: fechaCompleta,
@@ -212,10 +242,28 @@ const saveTask = async () => {
   };
 
   try {
-    const response = await axios.post('http://localhost:7062/api/Horario', newTask);
+    const response = await axios.post('https://localhost:7062/api/Horario', newTask);
     console.log('Horario creado correctamente:', response.data);
+
+    tasks.value.push({
+      fecha: selectedDate.value,
+      dia: selectedDay.value,
+      hora: selectedHour.value,
+      tema: temas.value.find(t => t.id === taskForm.value.temaId)?.nombre || '',
+      actividad: taskForm.value.tarea,
+    });
+
+
+    calendarOptions.value.events.push({
+      title: taskForm.value.tarea,
+      start: selectedDate.value,
+      allDay: true,
+    });
+
+
     alert('Tarea guardada');
-    // Aquí podrías limpiar el formulario si quieres:
+
+    // Limpiar el formulario
     taskForm.value = {
       hora: '',
       temaId: null,
@@ -224,10 +272,21 @@ const saveTask = async () => {
       lugar: '',
       grupoId: null
     };
+
+    closeAssignModal();
+
   } catch (error) {
-    console.error('Error al guardar la tarea:', error);
-    alert('Error al guardar la tarea');
+  if (error.response) {
+    console.error('Error al guardar la tarea: ', error.response.data);
+    console.error('Status:', error.response.status);
+    console.error('Headers:', error.response.headers);
+  } else if (error.request) {
+    console.error('Error: No se recibió respuesta del servidor', error.request);
+  } else {
+    console.error('Error en la configuración de la solicitud', error.message);
   }
+  alert('Error al guardar la tarea');
+}
 };
 
 // Buscar tarea en una celda
