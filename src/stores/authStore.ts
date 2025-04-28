@@ -2,14 +2,14 @@ import { defineStore } from 'pinia'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    token: null,
-    nombre: null,
-    correo: null,
-    rol: null,
-    isAuthenticated: false, // ✅ nuevo
+    token: null as string | null,
+    nombre: null as string | null,
+    correo: null as string | null,
+    rol: null as string | null,
+    isAuthenticated: false,
   }),
   actions: {
-    async login(correo, contraseña) {
+    async login(correo: string, contraseña: string) {
       try {
         const response = await fetch('https://localhost:7062/api/Usuario/Auth/Login', {
           method: 'POST',
@@ -17,17 +17,18 @@ export const useAuthStore = defineStore('auth', {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ correo, contraseña }),
-        })
+        });
 
-        const data = await response.json()
+        const data = await response.json();
 
-        if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión')
+        if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión');
 
-        this.token = data.usuario.token
-        this.nombre = data.usuario.nombre
-        this.correo = data.usuario.correo
-        this.rol = data.usuario.rol
-        this.isAuthenticated = true
+        // Corrigiendo: no es data.usuario.token
+        this.token = data.token;
+        this.nombre = data.nombre;
+        this.correo = data.correo;
+        this.rol = data.rol;
+        this.isAuthenticated = true;
 
         localStorage.setItem(
           'auth',
@@ -37,31 +38,32 @@ export const useAuthStore = defineStore('auth', {
             correo: this.correo,
             rol: this.rol,
           })
-        )
+        );
 
-        return { success: true }
-      } catch (err) {
-        return { success: false, message: err.message }
+        return { success: true };
+      } catch (err: any) {
+        this.isAuthenticated = false; // extra cuidado
+        return { success: false, message: err.message };
       }
     },
     loadFromStorage() {
-      const stored = localStorage.getItem('auth')
+      const stored = localStorage.getItem('auth');
       if (stored) {
-        const data = JSON.parse(stored)
-        this.token = data.token
-        this.nombre = data.nombre
-        this.correo = data.correo
-        this.rol = data.rol
-        this.isAuthenticated = true
+        const data = JSON.parse(stored);
+        this.token = data.token;
+        this.nombre = data.nombre;
+        this.correo = data.correo;
+        this.rol = data.rol;
+        this.isAuthenticated = true;
       }
     },
     logout() {
-      this.token = null
-      this.nombre = null
-      this.correo = null
-      this.rol = null
-      this.isAuthenticated = false
-      localStorage.removeItem('auth')
+      this.token = null;
+      this.nombre = null;
+      this.correo = null;
+      this.rol = null;
+      this.isAuthenticated = false;
+      localStorage.removeItem('auth');
     },
   },
-})
+});
