@@ -6,7 +6,7 @@ export const useAuthStore = defineStore('auth', {
     nombre: null as string | null,
     correo: null as string | null,
     rol: null as string | null,
-    usuarioId: null,
+    usuarioId:  null as number | null,   // ← asegúrate de tipar como number
     isAuthenticated: false,
   }),
   actions: {
@@ -29,7 +29,7 @@ export const useAuthStore = defineStore('auth', {
         this.nombre = data.nombre;
         this.correo = data.correo;
         this.rol = data.rol;
-        this.usuarioId = data.usuario.id  // <<--- agregar ID
+        this.usuarioId = data.id  // <<--- agregar ID
         this.isAuthenticated = true;
 
         localStorage.setItem(
