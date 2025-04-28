@@ -7,36 +7,34 @@
       class="shadow rounded p-4 mb-8"
     />
 
-    <!-- Tabla de horarios -->
-    <div v-if="selectedDate" class="mt-8">
-      <h2 class="text-xl font-semibold mb-4">Horario para: {{ formatDate(selectedDate) }}</h2>
+    <!-- Tabla de horario simplificada -->
+<div v-if="selectedDate" class="mt-8">
+  <h2 class="text-xl font-semibold mb-4">Actividades para: {{ formatDate(selectedDate) }}</h2>
 
-      <div class="overflow-auto">
-        <table class="min-w-full bg-white border">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="border p-2">Hora</th>
-              <th class="border p-2" v-for="day in daysOfWeek" :key="day">{{ day }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="hour in hours" :key="hour">
-              <td class="border p-2 font-semibold">{{ hour }}</td>
-              <td
-                class="border p-2 hover:bg-gray-100 cursor-pointer"
-                v-for="day in daysOfWeek" :key="day"
-                @click="openAssignModal(day, hour)"
-              >
-                <div v-if="getTask(selectedDate, day, hour)">
-                  <p class="text-sm font-bold">{{ getTask(selectedDate, day, hour).tema }}</p>
-                  <p class="text-xs">{{ getTask(selectedDate, day, hour).actividad }}</p>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <div class="overflow-auto">
+    <table class="min-w-full bg-white border">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="border p-2">Hora</th>
+          <th class="border p-2">Actividad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="task in tasksForSelectedDate" :key="task.hora">
+          <td class="border p-2 font-semibold">{{ task.hora }}</td>
+          <td class="border p-2">
+            <p class="text-sm font-bold">{{ task.tema }}</p>
+            <p class="text-xs">{{ task.actividad }}</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p v-if="tasksForSelectedDate.length === 0" class="text-center text-gray-500 mt-4">
+      No hay actividades asignadas para este día.
+    </p>
+  </div>
+</div>
 
     <!-- Modal de asignar tarea -->
 <div v-if="showAssignModal" class="fixed inset-0 bg-gray-500/50 flex justify-center items-center z-50">
@@ -113,6 +111,7 @@ import esLocale from '@fullcalendar/core/locales/es';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { computed } from 'vue';
 
 
 // Variables
@@ -124,6 +123,10 @@ const temas = ref([]);
 const grupos = ref([]);
 const showAssignModal = ref(false);
 
+
+const tasksForSelectedDate = computed(() => {
+  return tasks.value.filter(task => task.fecha === selectedDate.value);
+});
 
 const taskForm = ref({
   hora: '',
