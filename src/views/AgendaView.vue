@@ -61,12 +61,12 @@
         <h2 class="text-2xl font-bold mb-4">Detalles de la Tarea</h2>
 
         <div v-if="selectedTask">
-          <p><strong>Tema:</strong> {{ selectedTask.temaId }}</p>
-          <p><strong>Descripción:</strong> {{ selectedTask.descripcion }}</p>
-          <p><strong>Tarea:</strong> {{ selectedTask.tarea }}</p>
-          <p><strong>Hora:</strong> {{ selectedTask.hora }}</p>
-          <p><strong>Lugar:</strong> {{ selectedTask.lugar }}</p>
-          <p><strong>Grupo:</strong> {{ selectedTask.grupoId }}</p>
+          <p><strong>Tema:</strong> {{ selectedTask.tema || 'No asignado' }}</p>
+          <p><strong>Descripción:</strong> {{ selectedTask.descripcion || 'No asignado' }}</p>
+          <p><strong>Tarea:</strong> {{ selectedTask.tarea || 'No asignado' }}</p>
+          <p><strong>Hora:</strong> {{ selectedTask.hora || 'No asignado' }}</p>
+          <p><strong>Lugar:</strong> {{ selectedTask.lugar || 'No asignado' }}</p>
+          <p><strong>Grupo:</strong> {{ selectedTask.grupo || 'No asignado' }}</p>
         </div>
 
         <button
@@ -191,23 +191,28 @@ import { computed } from 'vue'
 // Variables
 const selectedDate = ref<string | null>(null)
 const selectedDay = ref('')
-const selectedHour = ref('')
 const tasks = ref([])
 const temas = ref([])
 const grupos = ref([])
 const showAssignModal = ref(false)
 const selectedTask = ref(null)
-const isDetailsModalOpen = ref(false);
-
+const isDetailsModalOpen = ref(false)
 
 const viewTaskDetails = (task) => {
-  selectedTask.value = task
+  selectedTask.value = {
+    tema: task.tema || '',
+    descripcion: task.descripcion || '',
+    tarea: task.actividad || '',
+    hora: task.hora || '',
+    lugar: task.lugar || '',
+    grupo: task.grupoId || '',
+  }
   isDetailsModalOpen.value = true
 }
 
 const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false; // Cerramos el modal
-};
+  isDetailsModalOpen.value = false
+}
 
 const tasksForSelectedDate = computed(() => {
   return tasks.value.filter((task) => task.fecha === selectedDate.value)
@@ -248,6 +253,10 @@ onMounted(async () => {
         hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
         tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
         actividad: horario.tarea,
+        descripcion: horario.descripcion || '',
+        lugar: horario.edificio || '',
+        grupoId: horario.grupoId || null,
+        temaId: horario.temaId || null,
       }
     })
 
@@ -349,6 +358,9 @@ const saveTask = async () => {
       hora: taskForm.value.hora,
       tema: temas.value.find((t) => t.id === taskForm.value.temaId)?.nombre || '',
       actividad: taskForm.value.tarea,
+      descripcion: taskForm.value.descripcion,
+      lugar: taskForm.value.lugar,
+      grupoId: taskForm.value.grupoId,
     })
 
     calendarOptions.value.events.push({
