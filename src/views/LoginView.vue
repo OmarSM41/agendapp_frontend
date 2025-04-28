@@ -22,6 +22,14 @@
             class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="••••••••"
           />
+          <div class="text-right mt-1">
+            <router-link
+              to="/Forgot-Password"
+              class="text-sm text-orange-600 hover:text-orange-800 hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </router-link>
+          </div>
         </div>
         <div class="text-red-500 text-sm mb-2" v-if="auth.error">{{ auth.error }}</div>
         <button
@@ -50,7 +58,6 @@ const handleLogin = async () => {
   const result = await auth.login(correo.value, contraseña.value)
   if (result.success) {
     console.log('Inicio de sesión exitoso:')
-
     router.push('/')
   } else {
     console.error('Error al iniciar sesión:', result.message)
