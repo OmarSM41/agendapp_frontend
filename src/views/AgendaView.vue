@@ -187,19 +187,17 @@ import axios from 'axios'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { computed } from 'vue'
-import { useAuthStore } from '@/stores/authStore' // Asegúrate de importar el store
-
 
 // Variables
 const selectedDate = ref<string | null>(null)
 const selectedDay = ref('')
+
 const tasks = ref([])
 const temas = ref([])
 const grupos = ref([])
 const showAssignModal = ref(false)
 const selectedTask = ref(null)
-const isDetailsModalOpen = ref(false);
-const authStore = useAuthStore()
+const isDetailsModalOpen = ref(false)
 
 
 const viewTaskDetails = (task) => {
@@ -234,9 +232,6 @@ const taskForm = ref({
 // Cargar al montar la vista
 onMounted(async () => {
   try {
-    // Obtener los datos del usuario autenticado
-    const usuarioId = authStore.usuarioId // Obtén el ID del usuario
-
     // Temas
     const temasResponse = await axios.get('https://localhost:7062/api/Tema')
     temas.value = temasResponse.data
@@ -249,10 +244,7 @@ onMounted(async () => {
     const horariosResponse = await axios.get('https://localhost:7062/api/Horario')
     const horarios = horariosResponse.data
 
-    // Filtrar los horarios por el usuario logueado
-    const horariosFiltrados = horarios.filter(horario => horario.usuarioId === usuarioId)
-
-    tasks.value = horariosFiltrados.map((horario) => {
+    tasks.value = horarios.map((horario) => {
       const fechaObj = parseISO(horario.fecha)
       const diaSemana = format(fechaObj, 'EEEE', { locale: es })
       const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
@@ -263,11 +255,15 @@ onMounted(async () => {
         hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
         tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
         actividad: horario.tarea,
+        descripcion: horario.descripcion || '',
+        lugar: horario.edificio || '',
+        grupoId: horario.grupoId || null,
+        temaId: horario.temaId || null,
       }
     })
 
-    // Establecer eventos para el calendario
-    calendarOptions.value.events = horariosFiltrados.map((horario) => ({
+    // eventos al calendario
+    calendarOptions.value.events = horarios.map((horario) => ({
       title: horario.tarea,
       start: horario.fecha,
       allDay: true,
@@ -305,6 +301,8 @@ const hours = [
   '17:00',
 ]
 
+// Días de la semana
+const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 // Función para formatear fecha
 const formatDate = (dateStr: string) => {
@@ -331,10 +329,11 @@ function closeAssignModal() {
   showAssignModal.value = false
 }
 
+const currentUserId = 1
 
 // Guardar la tarea
 const saveTask = async () => {
-  if (!taskForm.value.temaId || !taskForm.value.grupoId || !taskForm.value.tarea.trim()) {
+  if (!taskForm.value.temaId || !taskForm.value.grupoId || !taskForm.value.tarea.trim) {
     alert('Tema, Grupo y Tarea son obligatorios')
     return
   }
@@ -348,29 +347,29 @@ const saveTask = async () => {
     edificio: taskForm.value.lugar.trim(),
     grupoId: taskForm.value.grupoId,
     temaId: taskForm.value.temaId,
-    usuarioId: authStore.usuarioId,
+    usuarioId: currentUserId,
   }
 
   try {
     const response = await axios.post('https://localhost:7062/api/Horario', newTask)
     console.log('Horario creado correctamente:', response.data)
 
-    // Agregar solo las tareas del usuario autenticado
-    if (response.data.usuarioId === authStore.usuarioId) {
-      tasks.value.push({
-        fecha: selectedDate.value,
-        dia: selectedDay.value,
-        hora: taskForm.value.hora,
-        tema: temas.value.find((t) => t.id === taskForm.value.temaId)?.nombre || '',
-        actividad: taskForm.value.tarea,
-      })
+    tasks.value.push({
+      fecha: selectedDate.value,
+      dia: selectedDay.value,
+      hora: taskForm.value.hora,
+      tema: temas.value.find((t) => t.id === taskForm.value.temaId)?.nombre || '',
+      actividad: taskForm.value.tarea,
+      descripcion: taskForm.value.descripcion,
+      lugar: taskForm.value.lugar,
+      grupoId: taskForm.value.grupoId,
+    })
 
-      calendarOptions.value.events.push({
-        title: taskForm.value.tarea,
-        start: selectedDate.value,
-        allDay: true,
-      })
-    }
+    calendarOptions.value.events.push({
+      title: taskForm.value.tarea,
+      start: selectedDate.value,
+      allDay: true,
+    })
 
     alert('Tarea guardada')
 
@@ -386,10 +385,18 @@ const saveTask = async () => {
 
     closeAssignModal()
   } catch (error) {
+    if (error.response) {
+      console.error('Error al guardar la tarea: ', error.response.data)
+      console.error('Status:', error.response.status)
+      console.error('Headers:', error.response.headers)
+    } else if (error.request) {
+      console.error('Error: No se recibió respuesta del servidor', error.request)
+    } else {
+      console.error('Error en la configuración de la solicitud', error.message)
+    }
     alert('Error al guardar la tarea')
   }
 }
-
 
 // Buscar tarea en una celda
 function getTask(date: string, day: string, hour: string) {
