@@ -46,6 +46,11 @@ const router = createRouter({
       name: 'agenda',
       component: () => import('../views/AgendaView.vue'),
     },
+    {
+      path: '/grupos',
+      name: 'grupos',
+      component: () => import('../views/GruposView.vue'),
+    },
   ],
 })
 
