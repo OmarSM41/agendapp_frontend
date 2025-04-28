@@ -305,8 +305,6 @@ const hours = [
   '17:00',
 ]
 
-// Días de la semana
-const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 // Función para formatear fecha
 const formatDate = (dateStr: string) => {
