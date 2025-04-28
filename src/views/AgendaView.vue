@@ -240,12 +240,15 @@ onMounted(async () => {
 
     // Horarios
     const horariosResponse = await axios.get('https://localhost:7062/api/Horario')
-    const horarios = horariosResponse.data
+const horarios = horariosResponse.data
 
-    tasks.value = horarios.map((horario) => {
-      const fechaObj = parseISO(horario.fecha)
-      const diaSemana = format(fechaObj, 'EEEE', { locale: es })
-      const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+// Agrega este filtro:
+const horariosFiltrados = horarios.filter(horario => horario.usuarioId === currentUserId)
+
+tasks.value = horariosFiltrados.map((horario) => {
+  const fechaObj = parseISO(horario.fecha)
+  const diaSemana = format(fechaObj, 'EEEE', { locale: es })
+  const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
 
       return {
         fecha: horario.fecha.split('T')[0], // solo la fecha YYYY-MM-DD
@@ -260,12 +263,13 @@ onMounted(async () => {
       }
     })
 
-    // eventos al calendario
-    calendarOptions.value.events = horarios.map((horario) => ({
-      title: horario.tarea,
-      start: horario.fecha,
-      allDay: true,
-    }))
+// eventos al calendario
+calendarOptions.value.events = horariosFiltrados.map((horario) => ({
+  title: horario.tarea,
+  start: horario.fecha,
+  allDay: true,
+}))
+
   } catch (error) {
     console.error('Error al cargar los horarios:', error)
     alert('Error al cargar los horarios')
