@@ -9,10 +9,8 @@
 
       <!-- Botón para agregar una nueva actividad -->
       <div class="mb-4">
-        <button
-          @click="openAssignModal(selectedDate)"
-          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-        >
+        <button @click="openAssignModal(selectedDate)"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
           Agregar Actividad
         </button>
       </div>
@@ -35,10 +33,8 @@
                 <p class="text-xs">{{ task.actividad }}</p>
               </td>
               <td class="border p-2">
-                <button
-                  @click="viewTaskDetails(task)"
-                  class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded"
-                >
+                <button @click="viewTaskDetails(task)"
+                  class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded">
                   Ver
                 </button>
               </td>
@@ -53,10 +49,7 @@
     </div>
 
     <!-- Modal de detalles de tarea -->
-    <div
-      v-if="isDetailsModalOpen"
-      class="fixed inset-0 bg-gray-500/50 flex justify-center items-center z-50"
-    >
+    <div v-if="isDetailsModalOpen" class="fixed inset-0 bg-gray-500/50 flex justify-center items-center z-50">
       <div class="bg-white p-6 rounded-lg w-1/2">
         <h2 class="text-2xl font-bold mb-4">Detalles de la Tarea</h2>
 
@@ -69,20 +62,14 @@
           <p><strong>Grupo:</strong> {{ selectedTask.grupo || 'No asignado' }}</p>
         </div>
 
-        <button
-          @click="closeDetailsModal"
-          class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mt-4"
-        >
+        <button @click="closeDetailsModal" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mt-4">
           Cerrar
         </button>
       </div>
     </div>
 
     <!-- Modal de asignar tarea -->
-    <div
-      v-if="showAssignModal"
-      class="fixed inset-0 bg-gray-500/50 flex justify-center items-center z-50"
-    >
+    <div v-if="showAssignModal" class="fixed inset-0 bg-gray-500/50 flex justify-center items-center z-50">
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h2 class="text-lg font-semibold mb-4">Asignar tarea</h2>
 
@@ -101,46 +88,29 @@
           <!-- Descripción -->
           <div class="mb-4">
             <label class="block mb-1">Descripción</label>
-            <input
-              v-model="taskForm.descripcion"
-              type="text"
-              class="border p-2 rounded w-full"
-              placeholder="Descripción"
-            />
+            <input v-model="taskForm.descripcion" type="text" class="border p-2 rounded w-full"
+              placeholder="Descripción" />
           </div>
 
           <!-- Tarea -->
           <div class="mb-4">
             <label class="block mb-1">Tarea</label>
-            <input
-              v-model="taskForm.tarea"
-              type="text"
-              class="border p-2 rounded w-full"
-              placeholder="Tarea"
-            />
+            <input v-model="taskForm.tarea" type="text" class="border p-2 rounded w-full" placeholder="Tarea" />
           </div>
 
           <!-- Hora -->
           <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="hora"> Hora </label>
-            <input
-              v-model="taskForm.hora"
-              type="time"
-              id="hora"
+            <input v-model="taskForm.hora" type="time" id="hora"
               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-            />
+              required />
           </div>
 
           <!-- Lugar -->
           <div class="mb-4">
             <label class="block mb-1">Lugar</label>
-            <input
-              v-model="taskForm.lugar"
-              type="text"
-              class="border p-2 rounded w-full"
-              placeholder="Lugar (Edificio)"
-            />
+            <input v-model="taskForm.lugar" type="text" class="border p-2 rounded w-full"
+              placeholder="Lugar (Edificio)" />
           </div>
 
           <!-- Grupo -->
@@ -156,17 +126,11 @@
 
           <!-- Botones -->
           <div class="flex justify-end space-x-2">
-            <button
-              type="button"
-              @click="closeAssignModal"
-              class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded"
-            >
+            <button type="button" @click="closeAssignModal"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded">
               Cancelar
             </button>
-            <button
-              type="submit"
-              class="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
-            >
+            <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded">
               Guardar
             </button>
           </div>
@@ -249,7 +213,7 @@ onMounted(async () => {
 
     // Horarios
     const horariosResponse = await axios.get(`https://localhost:7062/api/Horario/usuario/${currentUserId}`);
-        const horarios = horariosResponse.data
+    const horarios = horariosResponse.data
 
     tasks.value = horarios.map((horario) => {
       const fechaObj = parseISO(horario.fecha)
@@ -372,23 +336,24 @@ const saveTask = async () => {
 
     closeAssignModal()
   } catch (error) {
-    if (error.response) {
-      console.error('Error al guardar la tarea: ', error.response.data)
-      console.error('Status:', error.response.status)
-      console.error('Headers:', error.response.headers)
-    } else if (error.request) {
-      console.error('Error: No se recibió respuesta del servidor', error.request)
+    if (axios.isAxiosError(error)) {
+
+      if (error.response) {
+        console.error('Error al guardar la tarea: ', error.response.data)
+        console.error('Status:', error.response.status)
+        console.error('Headers:', error.response.headers)
+      } else if (error.request) {
+        console.error('Error: No se recibió respuesta del servidor', error.request)
+      } else {
+        console.error('Error en la configuración de la solicitud', error.message)
+      }
     } else {
-      console.error('Error en la configuración de la solicitud', error.message)
+      console.error('Error desconocido:', error)
     }
     alert('Error al guardar la tarea')
   }
 }
 
-// Buscar tarea en una celda
-function getTask(date: string, day: string, hour: string) {
-  return tasks.value.find((task) => task.fecha === date && task.dia === day && task.hora === hour)
-}
 </script>
 
 <style scoped>
