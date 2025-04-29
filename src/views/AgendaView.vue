@@ -293,26 +293,9 @@ const calendarOptions = ref({
   },
 })
 
-// Horas de la tabla
-const hours = [
-  '07:00',
-  '08:00',
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-]
-
-
 // Función para formatear fecha
 const formatDate = (dateStr: string) => {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-  return new Date(dateStr).toLocaleDateString('es-ES', options)
+  return format(parseISO(dateStr), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
 }
 
 // Abrir el modal
