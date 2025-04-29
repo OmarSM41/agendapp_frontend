@@ -187,6 +187,9 @@ import axios from 'axios'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { computed } from 'vue'
+import { useAuthStore } from '@/stores/authStore';
+
+const authStore = useAuthStore();
 
 // Variables
 const selectedDate = ref<string | null>(null)
@@ -198,6 +201,10 @@ const grupos = ref([])
 const showAssignModal = ref(false)
 const selectedTask = ref(null)
 const isDetailsModalOpen = ref(false)
+
+const currentUserId = authStore.id; // Esto reemplaza tu const currentUserId = 1
+console.log("aca se vera lo del usario", currentUserId)
+
 
 
 const viewTaskDetails = (task) => {
@@ -241,8 +248,8 @@ onMounted(async () => {
     grupos.value = gruposResponse.data
 
     // Horarios
-    const horariosResponse = await axios.get('https://localhost:7062/api/Horario')
-    const horarios = horariosResponse.data
+    const horariosResponse = await axios.get(`https://localhost:7062/api/Horario/usuario/${currentUserId}`);
+        const horarios = horariosResponse.data
 
     tasks.value = horarios.map((horario) => {
       const fechaObj = parseISO(horario.fecha)
@@ -327,7 +334,6 @@ function closeAssignModal() {
   showAssignModal.value = false
 }
 
-const currentUserId = 1
 
 // Guardar la tarea
 const saveTask = async () => {

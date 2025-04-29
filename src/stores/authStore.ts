@@ -2,11 +2,11 @@ import { defineStore } from 'pinia'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    token: null as string | null,
-    nombre: null as string | null,
-    correo: null as string | null,
-    rol: null as string | null,
-    usuarioId:  null as number | null,   // ← asegúrate de tipar como number
+    token:      null as string | null,
+    nombre:     null as string | null,
+    correo:     null as string | null,
+    rol:        null as string | null,
+    id:         null as number | null,   // ID del usuario
     isAuthenticated: false,
   }),
   actions: {
@@ -14,60 +14,75 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await fetch('https://localhost:7062/api/Usuario/Auth/Login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ correo, contraseña }),
-        });
+        })
 
-        const data = await response.json();
+        const data = await response.json()
+        console.log('Respuesta del servidor:', data)
 
-        if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión');
+        if (!response.ok) {
+          throw new Error(data.message || 'Error al iniciar sesión')
+        }
 
-        // Corrigiendo: no es data.usuario.token
-        this.token = data.token;
-        this.nombre = data.nombre;
-        this.correo = data.correo;
-        this.rol = data.rol;
-        this.usuarioId = data.id  // <<--- agregar ID
-        this.isAuthenticated = true;
+        // Extraemos el objeto usuario
+        const usuario = data.usuario
 
-        localStorage.setItem(
-          'auth',
-          JSON.stringify({
-            token: this.token,
-            nombre: this.nombre,
-            correo: this.correo,
-            rol: this.rol,
-            usuarioId: this.usuarioId,
-          })
-        );
+        this.token           = usuario.token
+        this.nombre          = usuario.nombre
+        this.correo          = usuario.correo
+        this.rol             = usuario.rol
+        this.id              = usuario.id
+        this.isAuthenticated = true
 
-        return { success: true };
+        console.log('ID asignado:', this.id)
+
+        // Guardar en localStorage
+        localStorage.setItem('auth', JSON.stringify({
+          token: this.token,
+          nombre: this.nombre,
+          correo: this.correo,
+          rol:    this.rol,
+          id:     this.id,
+        }))
+
+        // Verificación
+        const stored = JSON.parse(localStorage.getItem('auth') || '{}')
+        console.log('Datos guardados:', stored)
+
+        return { success: true }
       } catch (err: any) {
-        this.isAuthenticated = false; // extra cuidado
-        return { success: false, message: err.message };
+        console.error('Error en login:', err)
+        this.isAuthenticated = false
+        return { success: false, message: err.message }
       }
     },
+
     loadFromStorage() {
-      const stored = localStorage.getItem('auth');
+      const stored = localStorage.getItem('auth')
       if (stored) {
-        const data = JSON.parse(stored);
-        this.token = data.token;
-        this.nombre = data.nombre;
-        this.correo = data.correo;
-        this.rol = data.rol;
-        this.usuarioId = data.usuarioId
-        this.isAuthenticated = true;
+        const data = JSON.parse(stored)
+        console.log('Datos cargados:', data)
+
+        this.token           = data.token
+        this.nombre          = data.nombre
+        this.correo          = data.correo
+        this.rol             = data.rol
+        this.id              = data.id
+        this.isAuthenticated = true
+
+        console.log('ID cargado:', this.id)
       }
     },
+
     logout() {
-      this.token = null;
-      this.nombre = null;
-      this.correo = null;
-      this.rol = null;
-      this.isAuthenticated = false;
-      localStorage.removeItem('auth');
+      this.token = null
+      this.nombre = null
+      this.correo = null
+      this.rol = null
+      this.id = null
+      this.isAuthenticated = false
+      localStorage.removeItem('auth')
     },
   },
-});
+})
