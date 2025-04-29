@@ -1,3 +1,232 @@
+<script setup lang="ts">
+// Imports
+import { onMounted, ref } from 'vue'
+import FullCalendar from '@fullcalendar/vue3'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import esLocale from '@fullcalendar/core/locales/es'
+import axios from 'axios'
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/authStore';
+import Swal from 'sweetalert2'
+
+
+const authStore = useAuthStore();
+
+// Variables
+const selectedDate = ref<string | null>(null)
+const selectedDay = ref('')
+
+const tasks = ref([])
+const temas = ref([])
+const grupos = ref([])
+const showAssignModal = ref(false)
+const selectedTask = ref(null)
+const isDetailsModalOpen = ref(false)
+
+const currentUserId = authStore.id; // Esto reemplaza tu const currentUserId = 1
+console.log("aca se vera lo del usario", currentUserId)
+
+
+
+const viewTaskDetails = (task) => {
+  selectedTask.value = {
+    tema: task.tema || '',
+    descripcion: task.descripcion || '',
+    tarea: task.actividad || '',
+    hora: task.hora || '',
+    lugar: task.lugar || '',
+    grupo: task.grupoId || '',
+  }
+  isDetailsModalOpen.value = true
+}
+
+const closeDetailsModal = () => {
+  isDetailsModalOpen.value = false
+}
+
+const tasksForSelectedDate = computed(() => {
+  return tasks.value.filter((task) => task.fecha === selectedDate.value)
+})
+
+const taskForm = ref({
+  hora: '',
+  temaId: null,
+  descripcion: '',
+  tarea: '',
+  lugar: '',
+  grupoId: null,
+})
+
+// Cargar al montar la vista
+onMounted(async () => {
+  try {
+    // Temas
+    const temasResponse = await axios.get('https://localhost:7062/api/Tema')
+    temas.value = temasResponse.data
+
+    // Grupos
+    const gruposResponse = await axios.get('https://localhost:7062/api/Grupo')
+    grupos.value = gruposResponse.data
+
+    // Horarios
+    const horariosResponse = await axios.get(`https://localhost:7062/api/Horario/usuario/${currentUserId}`);
+    const horarios = horariosResponse.data
+
+    tasks.value = horarios.map((horario) => {
+      const fechaObj = parseISO(horario.fecha)
+      const diaSemana = format(fechaObj, 'EEEE', { locale: es })
+      const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+
+      return {
+        fecha: horario.fecha.split('T')[0], // solo la fecha YYYY-MM-DD
+        dia: diaFormateado,
+        hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
+        tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
+        actividad: horario.tarea,
+        descripcion: horario.descripcion || '',
+        lugar: horario.edificio || '',
+        grupoId: horario.grupoId || null,
+        temaId: horario.temaId || null,
+      }
+    })
+
+    // eventos al calendario
+    calendarOptions.value.events = horarios.map((horario) => ({
+      title: horario.tarea,
+      start: horario.fecha,
+      allDay: true,
+    }))
+  } catch (error) {
+    console.error('Error al cargar los horarios:', error)
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo guardar la tarea',
+      confirmButtonColor: '#DC2626'
+    })
+  }
+})
+
+// Opciones del calendario
+const calendarOptions = ref({
+  plugins: [dayGridPlugin, interactionPlugin],
+  initialView: 'dayGridMonth',
+  locale: esLocale,
+  events: [],
+  eventColor: '#4F46E5',
+  dateClick: (info) => {
+    selectedDate.value = info.dateStr
+  },
+})
+
+// Función para formatear fecha
+const formatDate = (dateStr: string) => {
+  return format(parseISO(dateStr), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+}
+
+// Abrir el modal
+const openAssignModal = (day) => {
+  selectedDay.value = day
+  taskForm.value = {
+    hora: '',
+    temaId: null,
+    descripcion: '',
+    tarea: '',
+    lugar: '',
+    grupoId: null,
+  }
+  showAssignModal.value = true // O como sea que abras tu modal
+}
+
+// Cerrar el modal
+function closeAssignModal() {
+  showAssignModal.value = false
+}
+
+
+// Guardar la tarea
+const saveTask = async () => {
+  if (
+    !taskForm.value.temaId ||
+    !taskForm.value.grupoId ||
+    !taskForm.value.lugar ||
+    !taskForm.value.tarea.trim()
+  ) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Campos requeridos',
+      text: 'Tema, Grupo y Tarea son obligatorios',
+      confirmButtonColor: '#F59E0B'
+    })
+    return
+  }
+
+  const fechaCompleta = selectedDate.value + 'T' + taskForm.value.hora
+
+  const newTask = {
+    fecha: fechaCompleta,
+    descripcion: taskForm.value.descripcion.trim(),
+    tarea: taskForm.value.tarea.trim(),
+    edificio: taskForm.value.lugar.trim(),
+    grupoId: taskForm.value.grupoId,
+    temaId: taskForm.value.temaId,
+    usuarioId: currentUserId,
+  }
+
+  try {
+    const response = await axios.post('https://localhost:7062/api/Horario', newTask)
+    console.log('Horario creado correctamente:', response.data)
+
+    tasks.value.push({
+      fecha: selectedDate.value,
+      dia: selectedDay.value,
+      hora: taskForm.value.hora,
+      tema: temas.value.find((t) => t.id === taskForm.value.temaId)?.nombre || '',
+      actividad: taskForm.value.tarea,
+      descripcion: taskForm.value.descripcion,
+      lugar: taskForm.value.lugar,
+      grupoId: taskForm.value.grupoId,
+    })
+
+    calendarOptions.value.events.push({
+      title: taskForm.value.tarea,
+      start: selectedDate.value,
+      allDay: true,
+    })
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Tarea guardada',
+      text: 'La tarea ha sido creada exitosamente',
+      confirmButtonColor: '#4F46E5'
+    })
+
+    taskForm.value = {
+      hora: '',
+      temaId: null,
+      descripcion: '',
+      tarea: '',
+      lugar: '',
+      grupoId: null,
+    }
+
+    closeAssignModal()
+  } catch (error) {
+    console.error(error)
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo guardar la tarea',
+      confirmButtonColor: '#DC2626'
+    })
+  }
+
+
+}
+</script>
 <template>
   <div class="agenda-calendar p-4">
     <!-- Calendario -->
@@ -139,222 +368,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-// Imports
-import { onMounted, ref } from 'vue'
-import FullCalendar from '@fullcalendar/vue3'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import esLocale from '@fullcalendar/core/locales/es'
-import axios from 'axios'
-import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { computed } from 'vue'
-import { useAuthStore } from '@/stores/authStore';
-
-const authStore = useAuthStore();
-
-// Variables
-const selectedDate = ref<string | null>(null)
-const selectedDay = ref('')
-
-const tasks = ref([])
-const temas = ref([])
-const grupos = ref([])
-const showAssignModal = ref(false)
-const selectedTask = ref(null)
-const isDetailsModalOpen = ref(false)
-
-const currentUserId = authStore.id; // Esto reemplaza tu const currentUserId = 1
-console.log("aca se vera lo del usario", currentUserId)
-
-
-
-const viewTaskDetails = (task) => {
-  selectedTask.value = {
-    tema: task.tema || '',
-    descripcion: task.descripcion || '',
-    tarea: task.actividad || '',
-    hora: task.hora || '',
-    lugar: task.lugar || '',
-    grupo: task.grupoId || '',
-  }
-  isDetailsModalOpen.value = true
-}
-
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false
-}
-
-const tasksForSelectedDate = computed(() => {
-  return tasks.value.filter((task) => task.fecha === selectedDate.value)
-})
-
-const taskForm = ref({
-  hora: '',
-  temaId: null,
-  descripcion: '',
-  tarea: '',
-  lugar: '',
-  grupoId: null,
-})
-
-// Cargar al montar la vista
-onMounted(async () => {
-  try {
-    // Temas
-    const temasResponse = await axios.get('https://localhost:7062/api/Tema')
-    temas.value = temasResponse.data
-
-    // Grupos
-    const gruposResponse = await axios.get('https://localhost:7062/api/Grupo')
-    grupos.value = gruposResponse.data
-
-    // Horarios
-    const horariosResponse = await axios.get(`https://localhost:7062/api/Horario/usuario/${currentUserId}`);
-    const horarios = horariosResponse.data
-
-    tasks.value = horarios.map((horario) => {
-      const fechaObj = parseISO(horario.fecha)
-      const diaSemana = format(fechaObj, 'EEEE', { locale: es })
-      const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
-
-      return {
-        fecha: horario.fecha.split('T')[0], // solo la fecha YYYY-MM-DD
-        dia: diaFormateado,
-        hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
-        tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
-        actividad: horario.tarea,
-        descripcion: horario.descripcion || '',
-        lugar: horario.edificio || '',
-        grupoId: horario.grupoId || null,
-        temaId: horario.temaId || null,
-      }
-    })
-
-    // eventos al calendario
-    calendarOptions.value.events = horarios.map((horario) => ({
-      title: horario.tarea,
-      start: horario.fecha,
-      allDay: true,
-    }))
-  } catch (error) {
-    console.error('Error al cargar los horarios:', error)
-    alert('Error al cargar los horarios')
-  }
-})
-
-// Opciones del calendario
-const calendarOptions = ref({
-  plugins: [dayGridPlugin, interactionPlugin],
-  initialView: 'dayGridMonth',
-  locale: esLocale,
-  events: [],
-  eventColor: '#4F46E5',
-  dateClick: (info) => {
-    selectedDate.value = info.dateStr
-  },
-})
-
-// Función para formatear fecha
-const formatDate = (dateStr: string) => {
-  return format(parseISO(dateStr), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
-}
-
-// Abrir el modal
-const openAssignModal = (day) => {
-  selectedDay.value = day
-  taskForm.value = {
-    hora: '',
-    temaId: null,
-    descripcion: '',
-    tarea: '',
-    lugar: '',
-    grupoId: null,
-  }
-  showAssignModal.value = true // O como sea que abras tu modal
-}
-
-// Cerrar el modal
-function closeAssignModal() {
-  showAssignModal.value = false
-}
-
-
-// Guardar la tarea
-const saveTask = async () => {
-  if (!taskForm.value.temaId || !taskForm.value.grupoId || !taskForm.value.tarea.trim) {
-    alert('Tema, Grupo y Tarea son obligatorios')
-    return
-  }
-
-  const fechaCompleta = selectedDate.value + 'T' + taskForm.value.hora
-
-  const newTask = {
-    fecha: fechaCompleta,
-    descripcion: taskForm.value.descripcion.trim(),
-    tarea: taskForm.value.tarea.trim(),
-    edificio: taskForm.value.lugar.trim(),
-    grupoId: taskForm.value.grupoId,
-    temaId: taskForm.value.temaId,
-    usuarioId: currentUserId,
-  }
-
-  try {
-    const response = await axios.post('https://localhost:7062/api/Horario', newTask)
-    console.log('Horario creado correctamente:', response.data)
-
-    tasks.value.push({
-      fecha: selectedDate.value,
-      dia: selectedDay.value,
-      hora: taskForm.value.hora,
-      tema: temas.value.find((t) => t.id === taskForm.value.temaId)?.nombre || '',
-      actividad: taskForm.value.tarea,
-      descripcion: taskForm.value.descripcion,
-      lugar: taskForm.value.lugar,
-      grupoId: taskForm.value.grupoId,
-    })
-
-    calendarOptions.value.events.push({
-      title: taskForm.value.tarea,
-      start: selectedDate.value,
-      allDay: true,
-    })
-
-    alert('Tarea guardada')
-
-    // Limpiar el formulario
-    taskForm.value = {
-      hora: '',
-      temaId: null,
-      descripcion: '',
-      tarea: '',
-      lugar: '',
-      grupoId: null,
-    }
-
-    closeAssignModal()
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-
-      if (error.response) {
-        console.error('Error al guardar la tarea: ', error.response.data)
-        console.error('Status:', error.response.status)
-        console.error('Headers:', error.response.headers)
-      } else if (error.request) {
-        console.error('Error: No se recibió respuesta del servidor', error.request)
-      } else {
-        console.error('Error en la configuración de la solicitud', error.message)
-      }
-    } else {
-      console.error('Error desconocido:', error)
-    }
-    alert('Error al guardar la tarea')
-  }
-}
-
-</script>
 
 <style scoped>
 .agenda-calendar {
