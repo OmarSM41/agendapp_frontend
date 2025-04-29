@@ -2,11 +2,11 @@ import { defineStore } from 'pinia'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    token: null as string | null,
-    nombre: null as string | null,
-    correo: null as string | null,
-    rol: null as string | null,
-    id: null as number | null, // Cambiado a minúscula para consistencia
+    token:      null as string | null,
+    nombre:     null as string | null,
+    correo:     null as string | null,
+    rol:        null as string | null,
+    id:         null as number | null,   // ID del usuario
     isAuthenticated: false,
   }),
   actions: {
@@ -14,75 +14,75 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await fetch('https://localhost:7062/api/Usuario/Auth/Login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ correo, contraseña }),
-        });
+        })
 
-        const data = await response.json();
-        console.log("Respuesta del servidor:", data); // Depuración
+        const data = await response.json()
+        console.log('Respuesta del servidor:', data)
 
-        if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión');
+        if (!response.ok) {
+          throw new Error(data.message || 'Error al iniciar sesión')
+        }
 
-        // Asignación correcta desde la respuesta API
-        this.token = data.token;
-        this.nombre = data.nombre;
-        this.correo = data.correo;
-        this.rol = data.rol;
-        this.id = data.id; // ← Usamos minúscula para coincidir con API
-        this.isAuthenticated = true;
+        // Extraemos el objeto usuario
+        const usuario = data.usuario
 
-        console.log("ID asignado:", this.id); // Verificación
+        this.token           = usuario.token
+        this.nombre          = usuario.nombre
+        this.correo          = usuario.correo
+        this.rol             = usuario.rol
+        this.id              = usuario.id
+        this.isAuthenticated = true
 
-        // Guardamos en localStorage con las mismas propiedades
-        localStorage.setItem(
-          'auth',
-          JSON.stringify({
-            token: this.token,
-            nombre: this.nombre,
-            correo: this.correo,
-            rol: this.rol,
-            id: this.id, // ← Mismo nombre que en el state
-          })
-        );
+        console.log('ID asignado:', this.id)
 
-        // Verificación de lo guardado
-        const stored = localStorage.getItem('auth');
-        console.log("Datos guardados:", JSON.parse(stored || '{}'));
+        // Guardar en localStorage
+        localStorage.setItem('auth', JSON.stringify({
+          token: this.token,
+          nombre: this.nombre,
+          correo: this.correo,
+          rol:    this.rol,
+          id:     this.id,
+        }))
 
-        return { success: true };
+        // Verificación
+        const stored = JSON.parse(localStorage.getItem('auth') || '{}')
+        console.log('Datos guardados:', stored)
+
+        return { success: true }
       } catch (err: any) {
-        console.error("Error en login:", err);
-        this.isAuthenticated = false;
-        return { success: false, message: err.message };
+        console.error('Error en login:', err)
+        this.isAuthenticated = false
+        return { success: false, message: err.message }
       }
     },
+
     loadFromStorage() {
-      const stored = localStorage.getItem('auth');
+      const stored = localStorage.getItem('auth')
       if (stored) {
-        const data = JSON.parse(stored);
-        console.log("Datos cargados:", data); // Depuración
+        const data = JSON.parse(stored)
+        console.log('Datos cargados:', data)
 
-        // Asignación consistente
-        this.token = data.token;
-        this.nombre = data.nombre;
-        this.correo = data.correo;
-        this.rol = data.rol;
-        this.id = data.id; // ← Mismo nombre que al guardar
-        this.isAuthenticated = true;
+        this.token           = data.token
+        this.nombre          = data.nombre
+        this.correo          = data.correo
+        this.rol             = data.rol
+        this.id              = data.id
+        this.isAuthenticated = true
 
-        console.log("ID cargado:", this.id); // Verificación
+        console.log('ID cargado:', this.id)
       }
     },
+
     logout() {
-      this.token = null;
-      this.nombre = null;
-      this.correo = null;
-      this.rol = null;
-      this.id = null;
-      this.isAuthenticated = false;
-      localStorage.removeItem('auth');
+      this.token = null
+      this.nombre = null
+      this.correo = null
+      this.rol = null
+      this.id = null
+      this.isAuthenticated = false
+      localStorage.removeItem('auth')
     },
   },
-});
+})
