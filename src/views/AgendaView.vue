@@ -202,7 +202,7 @@ const showAssignModal = ref(false)
 const selectedTask = ref(null)
 const isDetailsModalOpen = ref(false)
 
-const currentUserId = authStore.Id; // Esto reemplaza tu const currentUserId = 1
+const currentUserId = authStore.id; // Esto reemplaza tu const currentUserId = 1
 console.log("aca se vera lo del usario", currentUserId)
 
 
