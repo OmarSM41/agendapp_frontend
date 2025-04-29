@@ -51,6 +51,11 @@ const router = createRouter({
       name: 'grupos',
       component: () => import('../views/GruposView.vue'),
     },
+    {
+      path: '/temas',
+      name: 'temas',
+      component: () => import('../views/TemasView.vue'),
+    },
   ],
 })
 
