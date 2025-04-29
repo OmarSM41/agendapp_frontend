@@ -6,7 +6,7 @@ export const useAuthStore = defineStore('auth', {
     nombre: null as string | null,
     correo: null as string | null,
     rol: null as string | null,
-    usuarioId:  null as number | null,   // ← asegúrate de tipar como number
+    id: null as number | null, // Cambiado a minúscula para consistencia
     isAuthenticated: false,
   }),
   actions: {
@@ -21,17 +21,21 @@ export const useAuthStore = defineStore('auth', {
         });
 
         const data = await response.json();
+        console.log("Respuesta del servidor:", data); // Depuración
 
         if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión');
 
-        // Corrigiendo: no es data.usuario.token
+        // Asignación correcta desde la respuesta API
         this.token = data.token;
         this.nombre = data.nombre;
         this.correo = data.correo;
         this.rol = data.rol;
-        this.usuarioId = data.id  // <<--- agregar ID
+        this.id = data.id; // ← Usamos minúscula para coincidir con API
         this.isAuthenticated = true;
 
+        console.log("ID asignado:", this.id); // Verificación
+
+        // Guardamos en localStorage con las mismas propiedades
         localStorage.setItem(
           'auth',
           JSON.stringify({
@@ -39,13 +43,18 @@ export const useAuthStore = defineStore('auth', {
             nombre: this.nombre,
             correo: this.correo,
             rol: this.rol,
-            usuarioId: this.usuarioId,
+            id: this.id, // ← Mismo nombre que en el state
           })
         );
 
+        // Verificación de lo guardado
+        const stored = localStorage.getItem('auth');
+        console.log("Datos guardados:", JSON.parse(stored || '{}'));
+
         return { success: true };
       } catch (err: any) {
-        this.isAuthenticated = false; // extra cuidado
+        console.error("Error en login:", err);
+        this.isAuthenticated = false;
         return { success: false, message: err.message };
       }
     },
@@ -53,12 +62,17 @@ export const useAuthStore = defineStore('auth', {
       const stored = localStorage.getItem('auth');
       if (stored) {
         const data = JSON.parse(stored);
+        console.log("Datos cargados:", data); // Depuración
+
+        // Asignación consistente
         this.token = data.token;
         this.nombre = data.nombre;
         this.correo = data.correo;
         this.rol = data.rol;
-        this.usuarioId = data.usuarioId
+        this.id = data.id; // ← Mismo nombre que al guardar
         this.isAuthenticated = true;
+
+        console.log("ID cargado:", this.id); // Verificación
       }
     },
     logout() {
@@ -66,6 +80,7 @@ export const useAuthStore = defineStore('auth', {
       this.nombre = null;
       this.correo = null;
       this.rol = null;
+      this.id = null;
       this.isAuthenticated = false;
       localStorage.removeItem('auth');
     },
