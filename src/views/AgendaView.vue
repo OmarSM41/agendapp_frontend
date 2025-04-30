@@ -7,7 +7,7 @@
   import esLocale from '@fullcalendar/core/locales/es'
   import axios from 'axios'
   import { format, parseISO } from 'date-fns'
-  import { es } from 'date-fns/locale'
+  import { es, id } from 'date-fns/locale'
   import { computed } from 'vue'
   import { useAuthStore } from '@/stores/authStore'
   import Swal from 'sweetalert2'
@@ -239,7 +239,80 @@
     })
   }
 
-  const deleteTask = async (id: number) => {
+
+
+  const tasksForSelectedDate = computed(() => {
+    return tasks.value
+      .filter((task) => task.fecha === selectedDate.value)
+      .sort((a, b) => a.hora.localeCompare(b.hora))
+  })
+
+  // Cargar al montar la vista
+  onMounted(async () => {
+  try {
+    // Temas
+    const temasResponse = await axios.get('https://localhost:7062/api/Tema')
+    temas.value = temasResponse.data
+
+    // Grupos
+    const gruposResponse = await axios.get('https://localhost:7062/api/Grupo')
+    grupos.value = gruposResponse.data
+
+    // Horarios
+    const horariosResponse = await axios.get(
+      `https://localhost:7062/api/Horario/usuario/${currentUserId}`,
+    )
+    const horarios = horariosResponse.data
+
+    tasks.value = horarios.map((horario) => {
+      const fechaObj = parseISO(horario.fecha)
+      const diaSemana = format(fechaObj, 'EEEE', { locale: es })
+      const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+
+      return {
+        id: horario.id, // Asegúrate de incluir el ID aquí
+        fecha: horario.fecha.split('T')[0],
+        dia: diaFormateado,
+        hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
+        horaFin: horario.fechaFin?.split('T')[1]?.substring(0, 5) || '',
+        tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
+        actividad: horario.tarea,
+        descripcion: horario.descripcion || '',
+        lugar: horario.edificio || '',
+        grupoId: horario.grupoId || null,
+        temaId: horario.temaId || null,
+      }
+    })
+
+    // eventos al calendario
+    calendarOptions.value.events = horarios.map((horario) => {
+      const tema = temas.value.find((t) => t.id === horario.temaId)
+      return {
+        id: horario.id.toString(), // Convertir a string para FullCalendar
+        title: horario.tarea,
+        start: horario.fecha,
+        end: horario.fechaFin,
+        allDay: false,
+        color: tema?.color || '#4F46E5',
+        extendedProps: {
+          // Puedes añadir propiedades adicionales aquí
+          temaId: horario.temaId,
+          grupoId: horario.grupoId
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Error al cargar los horarios:', error)
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo cargar los horarios',
+      confirmButtonColor: '#DC2626',
+    })
+  }
+})
+
+const deleteTask = async (id: number) => {
   const result = await Swal.fire({
     title: '¿Eliminar tarea?',
     text: 'Esta acción no se puede deshacer',
@@ -254,82 +327,34 @@
   if (!result.isConfirmed) return
 
   try {
-    await axios.delete(`https://localhost:7062/api/Horario/${id}`)  // Endpoint para eliminar tarea
-    // Después de eliminar la tarea, actualiza la lista de tareas
+    await axios.delete(`https://localhost:7062/api/Horario/${id}`)
+
+    // Actualizar lista local
     tasks.value = tasks.value.filter(task => task.id !== id)
 
-    Swal.fire('Eliminado', 'Tarea eliminada correctamente', 'success')
-  } catch (error: any) {
-    console.error('Error al eliminar tarea:', error.response?.data)
-    Swal.fire('Error', error.response?.data?.message || 'Error al eliminar tarea', 'error')
+    // Eliminar del calendario visual
+    const calendarApi = calendarRef.value.getApi()
+    const eventToRemove = calendarApi.getEventById(id.toString())
+    if (eventToRemove) {
+      eventToRemove.remove()
+    }
+
+    await Swal.fire({
+      title: '¡Eliminado!',
+      text: 'La tarea fue eliminada correctamente',
+      icon: 'success',
+      confirmButtonColor: '#4F46E5'
+    })
+  } catch (error) {
+    console.error('Error al eliminar:', error)
+    await Swal.fire({
+      title: 'Error',
+      text: 'No se pudo eliminar la tarea',
+      icon: 'error',
+      confirmButtonColor: '#DC2626'
+    })
   }
 }
-
-
-  const tasksForSelectedDate = computed(() => {
-    return tasks.value
-      .filter((task) => task.fecha === selectedDate.value)
-      .sort((a, b) => a.hora.localeCompare(b.hora))
-  })
-
-  // Cargar al montar la vista
-  onMounted(async () => {
-    try {
-      // Temas
-      const temasResponse = await axios.get('https://localhost:7062/api/Tema')
-      temas.value = temasResponse.data
-
-      // Grupos
-      const gruposResponse = await axios.get('https://localhost:7062/api/Grupo')
-      grupos.value = gruposResponse.data
-
-      // Horarios
-      const horariosResponse = await axios.get(
-        `https://localhost:7062/api/Horario/usuario/${currentUserId}`,
-      )
-      const horarios = horariosResponse.data
-
-      tasks.value = horarios.map((horario) => {
-        const fechaObj = parseISO(horario.fecha)
-        const diaSemana = format(fechaObj, 'EEEE', { locale: es })
-        const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
-
-        return {
-          fecha: horario.fecha.split('T')[0], // solo la fecha YYYY-MM-DD
-          dia: diaFormateado,
-          hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
-          horaFin: horario.fechaFin?.split('T')[1]?.substring(0, 5) || '',
-          tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
-          actividad: horario.tarea,
-          descripcion: horario.descripcion || '',
-          lugar: horario.edificio || '',
-          grupoId: horario.grupoId || null,
-          temaId: horario.temaId || null,
-        }
-      })
-
-      // eventos al calendario
-      calendarOptions.value.events = horarios.map((horario) => {
-        const tema = temas.value.find((t) => t.id === horario.temaId)
-        return {
-          title: horario.tarea,
-          start: horario.fecha,
-          end: horario.fechaFin,
-          allDay: false,
-          color: tema?.color || '#4F46E5' // Usa el color del tema o uno por defecto
-        }
-      }
-      )
-    } catch (error) {
-      console.error('Error al cargar los horarios:', error)
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo guardar la tarea',
-        confirmButtonColor: '#DC2626',
-      })
-    }
-  })
 
   // Opciones del calendario
   const calendarOptions = ref({
