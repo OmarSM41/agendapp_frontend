@@ -42,8 +42,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 
 const router = useRouter()
+const toast = useToast()
 
 const nombre = ref('')
 const apellido = ref('')
@@ -55,6 +57,7 @@ const error = ref('')
 const registrarUsuario = async () => {
   if (contraseña.value !== confirmacionContraseña.value) {
     error.value = 'Las contraseñas no coinciden'
+    toast.error('❌ Las contraseñas no coinciden')
     return
   }
 
@@ -75,18 +78,18 @@ const registrarUsuario = async () => {
 
     if (!response.ok) {
       const errorData = await response.json()
-      console.error('Error en el registro:', errorData)
       throw new Error(errorData.message || 'Error al registrar')
     }
 
     const data = await response.json()
-    console.log('Usuario registrado exitosamente:', data)
-    alert('Registro exitoso ✅')
+    toast.success('Registro exitoso')
     router.push('/login')
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error:', err.message)
     error.value = err.message
+    toast.error(`❌ ${err.message}`)
   }
 }
 </script>
+
 
