@@ -100,12 +100,7 @@ export default defineComponent({
       try {
         const Temaresponse = await axios.get(`https://localhost:7062/api/tema/usuario/${usuarioId}`)
         temas.value = Temaresponse.data
-        Swal.fire({
-          icon: 'success',
-          title: 'Temas cargados',
-          showConfirmButton: false,
-          timer: 1500,
-        })
+
       } catch (error) {
         console.error('Error al obtener los temas', error)
         Swal.fire({
