@@ -551,7 +551,7 @@
           </h2>
           <form @submit.prevent="saveTask">
             <button type="submit"
-              class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow flex items-center gap-2">
+              class="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg shadow flex items-center gap-2">
               <IconPlus class="w-5 h-5" />
               Agregar Actividad
             </button>
