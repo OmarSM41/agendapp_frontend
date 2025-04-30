@@ -7,7 +7,7 @@
   import esLocale from '@fullcalendar/core/locales/es'
   import axios from 'axios'
   import { format, parseISO } from 'date-fns'
-  import { es } from 'date-fns/locale'
+  import { es, id } from 'date-fns/locale'
   import { computed } from 'vue'
   import { useAuthStore } from '@/stores/authStore'
   import Swal from 'sweetalert2'
@@ -18,6 +18,7 @@
     Plus as IconPlus,
     Eye as IconEye,
     X as IconX,
+    Trash2Icon,
   } from 'lucide-vue-next'
   import { jsPDF } from 'jspdf'
   import html2pdf from 'html2pdf.js'
@@ -238,6 +239,8 @@
     })
   }
 
+
+
   const tasksForSelectedDate = computed(() => {
     return tasks.value
       .filter((task) => task.fecha === selectedDate.value)
@@ -246,62 +249,112 @@
 
   // Cargar al montar la vista
   onMounted(async () => {
-    try {
-      // Temas
-      const temasResponse = await axios.get('https://localhost:7062/api/Tema')
-      temas.value = temasResponse.data
+  try {
+    // Temas
+    const temasResponse = await axios.get('https://localhost:7062/api/Tema')
+    temas.value = temasResponse.data
 
-      // Grupos
-      const gruposResponse = await axios.get('https://localhost:7062/api/Grupo')
-      grupos.value = gruposResponse.data
+    // Grupos
+    const gruposResponse = await axios.get('https://localhost:7062/api/Grupo')
+    grupos.value = gruposResponse.data
 
-      // Horarios
-      const horariosResponse = await axios.get(
-        `https://localhost:7062/api/Horario/usuario/${currentUserId}`,
-      )
-      const horarios = horariosResponse.data
+    // Horarios
+    const horariosResponse = await axios.get(
+      `https://localhost:7062/api/Horario/usuario/${currentUserId}`,
+    )
+    const horarios = horariosResponse.data
 
-      tasks.value = horarios.map((horario) => {
-        const fechaObj = parseISO(horario.fecha)
-        const diaSemana = format(fechaObj, 'EEEE', { locale: es })
-        const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+    tasks.value = horarios.map((horario) => {
+      const fechaObj = parseISO(horario.fecha)
+      const diaSemana = format(fechaObj, 'EEEE', { locale: es })
+      const diaFormateado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
 
-        return {
-          fecha: horario.fecha.split('T')[0], // solo la fecha YYYY-MM-DD
-          dia: diaFormateado,
-          hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
-          horaFin: horario.fechaFin?.split('T')[1]?.substring(0, 5) || '',
-          tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
-          actividad: horario.tarea,
-          descripcion: horario.descripcion || '',
-          lugar: horario.edificio || '',
-          grupoId: horario.grupoId || null,
-          temaId: horario.temaId || null,
-        }
-      })
+      return {
+        id: horario.id, // Asegúrate de incluir el ID aquí
+        fecha: horario.fecha.split('T')[0],
+        dia: diaFormateado,
+        hora: horario.fecha.split('T')[1]?.substring(0, 5) || '',
+        horaFin: horario.fechaFin?.split('T')[1]?.substring(0, 5) || '',
+        tema: temas.value.find((t) => t.id === horario.temaId)?.nombre || '',
+        actividad: horario.tarea,
+        descripcion: horario.descripcion || '',
+        lugar: horario.edificio || '',
+        grupoId: horario.grupoId || null,
+        temaId: horario.temaId || null,
+      }
+    })
 
-      // eventos al calendario
-      calendarOptions.value.events = horarios.map((horario) => {
-        const tema = temas.value.find((t) => t.id === horario.temaId)
-        return {
-          title: horario.tarea,
-          start: horario.fecha,
-          end: horario.fechaFin,
-          allDay: false,
-          color: tema?.color || '#4F46E5' // Usa el color del tema o uno por defecto
+    // eventos al calendario
+    calendarOptions.value.events = horarios.map((horario) => {
+      const tema = temas.value.find((t) => t.id === horario.temaId)
+      return {
+        id: horario.id.toString(), // Convertir a string para FullCalendar
+        title: horario.tarea,
+        start: horario.fecha,
+        end: horario.fechaFin,
+        allDay: false,
+        color: tema?.color || '#4F46E5',
+        extendedProps: {
+          // Puedes añadir propiedades adicionales aquí
+          temaId: horario.temaId,
+          grupoId: horario.grupoId
         }
       }
-      )
-    } catch (error) {
-      console.error('Error al cargar los horarios:', error)
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo guardar la tarea',
-        confirmButtonColor: '#DC2626',
-      })
-    }
+    })
+  } catch (error) {
+    console.error('Error al cargar los horarios:', error)
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo cargar los horarios',
+      confirmButtonColor: '#DC2626',
+    })
+  }
+})
+
+const deleteTask = async (id: number) => {
+  const result = await Swal.fire({
+    title: '¿Eliminar tarea?',
+    text: 'Esta acción no se puede deshacer',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
   })
+
+  if (!result.isConfirmed) return
+
+  try {
+    await axios.delete(`https://localhost:7062/api/Horario/${id}`)
+
+    // Actualizar lista local
+    tasks.value = tasks.value.filter(task => task.id !== id)
+
+    // Eliminar del calendario visual
+    const calendarApi = calendarRef.value.getApi()
+    const eventToRemove = calendarApi.getEventById(id.toString())
+    if (eventToRemove) {
+      eventToRemove.remove()
+    }
+
+    await Swal.fire({
+      title: '¡Eliminado!',
+      text: 'La tarea fue eliminada correctamente',
+      icon: 'success',
+      confirmButtonColor: '#4F46E5'
+    })
+  } catch (error) {
+    console.error('Error al eliminar:', error)
+    await Swal.fire({
+      title: 'Error',
+      text: 'No se pudo eliminar la tarea',
+      icon: 'error',
+      confirmButtonColor: '#DC2626'
+    })
+  }
+}
 
   // Opciones del calendario
   const calendarOptions = ref({
@@ -566,7 +619,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="task in tasksForSelectedDate" :key="task.hora + task.tema + task.actividad"
+              <tr v-for="task in tasksForSelectedDate" :key="task.id"
                 class="border-b hover:bg-gray-50">
                 <td class="px-4 py-3 font-semibold">{{ task.hora }} - {{ task.horaFin }}</td>
                 <td class="px-4 py-3">
@@ -579,6 +632,10 @@
                     <IconEye class="w-4 h-4" />
                     Ver
                   </button>
+                  <button @click="deleteTask(task.id)"
+                  class=" bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all flex items-center
+                  gap-1">
+                  <Trash2Icon class="w-4 h-4" /> Eliminar</button>
                 </td>
               </tr>
             </tbody>
