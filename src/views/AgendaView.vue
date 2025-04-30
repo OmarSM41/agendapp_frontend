@@ -18,6 +18,7 @@
     Plus as IconPlus,
     Eye as IconEye,
     X as IconX,
+    Trash2Icon,
   } from 'lucide-vue-next'
   import { jsPDF } from 'jspdf'
   import html2pdf from 'html2pdf.js'
@@ -237,6 +238,33 @@
       confirmButtonColor: '#4F46E5',
     })
   }
+
+  const deleteTask = async (id: number) => {
+  const result = await Swal.fire({
+    title: '¿Eliminar tarea?',
+    text: 'Esta acción no se puede deshacer',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    await axios.delete(`https://localhost:7062/api/Horario/${id}`)  // Endpoint para eliminar tarea
+    // Después de eliminar la tarea, actualiza la lista de tareas
+    tasks.value = tasks.value.filter(task => task.id !== id)
+
+    Swal.fire('Eliminado', 'Tarea eliminada correctamente', 'success')
+  } catch (error: any) {
+    console.error('Error al eliminar tarea:', error.response?.data)
+    Swal.fire('Error', error.response?.data?.message || 'Error al eliminar tarea', 'error')
+  }
+}
+
 
   const tasksForSelectedDate = computed(() => {
     return tasks.value
@@ -566,7 +594,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="task in tasksForSelectedDate" :key="task.hora + task.tema + task.actividad"
+              <tr v-for="task in tasksForSelectedDate" :key="task.id"
                 class="border-b hover:bg-gray-50">
                 <td class="px-4 py-3 font-semibold">{{ task.hora }} - {{ task.horaFin }}</td>
                 <td class="px-4 py-3">
@@ -579,6 +607,10 @@
                     <IconEye class="w-4 h-4" />
                     Ver
                   </button>
+                  <button @click="deleteTask(task.id)"
+                  class=" bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all flex items-center
+                  gap-1">
+                  <Trash2Icon class="w-4 h-4" /> Eliminar</button>
                 </td>
               </tr>
             </tbody>
