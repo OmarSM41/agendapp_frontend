@@ -9,9 +9,13 @@
       <!-- Navegación principal -->
       <nav class="hidden md:flex space-x-6">
         <a href="/" class="text-white hover:text-purple-100 font-medium">Inicio</a>
-        <a href="/agenda" class="text-white hover:text-purple-100 font-medium">Agenda</a>
-        <a href="/temas" class="text-white hover:text-purple-100 font-medium">Temas</a>
-        <a href="/grupos" class="text-white hover:text-purple-100 font-medium">Grupos</a>
+
+        <!-- Mostrar solo si el usuario está autenticado -->
+        <template v-if="auth.isAuthenticated">
+          <a href="/agenda" class="text-white hover:text-purple-100 font-medium">Agenda</a>
+          <a href="/temas" class="text-white hover:text-purple-100 font-medium">Temas</a>
+          <a href="/grupos" class="text-white hover:text-purple-100 font-medium">Grupos</a>
+        </template>
       </nav>
 
       <!-- Botones adicionales -->
@@ -71,7 +75,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 
-
 export default {
   setup() {
     const auth = useAuthStore()
@@ -90,9 +93,6 @@ export default {
       auth,
       cerrarSesion,
     }
-
-
-
   },
 }
 </script>

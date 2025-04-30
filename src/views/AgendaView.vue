@@ -316,7 +316,9 @@
     events: [],
     eventColor: '#4F46E5',
     slotMinTime: '07:00:00', // empieza a las 7 AM
-    slotMaxTime: '21:40:00',
+    slotMaxTime: '22:10:00',
+    slotDuration: '00:30:00',
+    slotLabelInterval: '00:30:00', // intervalo entre etiquetas de hora (cada hora)
     eventTimeFormat: {
       hour: '2-digit',
       minute: '2-digit',
@@ -392,11 +394,11 @@
     <div class="swal2-form-container">
       <div class="swal2-form-group">
         <label for="hora">Hora de Incio<span style="color:red">*</span></label>
-        <input id="hora" type="time" min="07:00" max="21:40" class="swal2-input" value="07:00">
+        <input id="hora" type="time" min="07:00" max="22:00" class="swal2-input" value="07:00">
       </div>
       <div class="swal2-form-group">
       <label for="hora">Hora de Fin<span style="color:red">*</span></label>
-      <input id="horaFin" type="time" min="07:00" max="21:40" class="swal2-input" value="07:00">
+      <input id="horaFin" type="time" min="07:00" max="22:00" class="swal2-input" value="07:00">
       </div>
 
       <div class="swal2-form-group">
@@ -532,11 +534,7 @@
           <IconCalendarDays class="w-6 h-6 text-indigo-600" />
           Calendario de Actividades
         </h1>
-        <button @click="exportToPDF"
-          class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg shadow flex items-center gap-2">
-          <IconClipboardList class="w-5 h-5" />
-          Exportar PDF
-        </button>
+
       </div>
 
 
