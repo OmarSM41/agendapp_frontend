@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100">
+  <div class="min-h-screen bg-gradient-to-br from-amber-100 to-orange-100">
     <!-- Hero Section -->
     <section class="container mx-auto px-4 py-20 text-center">
       <div class="max-w-3xl mx-auto">
@@ -11,7 +11,7 @@
         </p>
         <a
           href="#about"
-          class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg transition duration-300"
+          class="inline-block bg-amber-600 hover:bg-amber-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg transition duration-300"
         >
           Conoce más
         </a>

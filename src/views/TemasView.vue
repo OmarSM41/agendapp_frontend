@@ -1,6 +1,6 @@
 <template>
   <div class="p-6 max-w-5xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 text-indigo-700">Gestión de Temas</h1>
+    <h1 class="text-3xl font-bold mb-6 text-amber-700">Gestión de Temas</h1>
 
     <!-- Formulario -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-10">
@@ -20,7 +20,7 @@
         </div>
         <div class="col-span-2 flex gap-4 mt-2">
           <button type="submit"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-all">
+            class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg transition-all">
             {{ isEditMode ? 'Actualizar Tema' : 'Crear Tema' }}
           </button>
           <button v-if="isEditMode" type="button" @click="cancelEdit"
