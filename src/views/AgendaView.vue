@@ -227,6 +227,7 @@ const saveTask = async () => {
 
 }
 </script>
+
 <template>
   <div class="agenda-calendar p-4">
     <!-- Calendario -->

@@ -1,55 +1,87 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-2xl font-bold mb-4">CRUD de Temas</h1>
+  <div class="p-6 max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-indigo-700">Gestión de Temas</h1>
 
-    <!-- Formulario para agregar o editar tema -->
-    <form @submit.prevent="handleSubmit" class="mb-6">
-      <div class="mb-4">
-        <label class="block mb-1">Nombre del tema:</label>
-        <input v-model="form.nombre" type="text" class="border p-2 w-full" required />
-      </div>
-      <div class="mb-4">
-        <label class="block mb-1">Color del tema:</label>
-        <input v-model="form.color" type="color" class="border p-2 w-16 h-10" required />
-      </div>
-      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
-        {{ isEditMode ? 'Actualizar Tema' : 'Crear Tema' }}
-      </button>
-      <button
-        v-if="isEditMode"
-        type="button"
-        @click="cancelEdit"
-        class="ml-2 bg-gray-500 text-white px-4 py-2 rounded"
-      >
-        Cancelar
-      </button>
-    </form>
+    <!-- Formulario -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-10">
+      <h2 class="text-xl font-semibold mb-4">
+        {{ isEditMode ? 'Editar Tema' : 'Crear Nuevo Tema' }}
+      </h2>
+      <form @submit.prevent="handleSubmit" class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del tema</label>
+          <input v-model="form.nombre" type="text"
+            class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Ej. Matemáticas" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+          <input v-model="form.color" type="color" class="w-16 h-10 rounded border cursor-pointer" required />
+        </div>
+        <div class="col-span-2 flex gap-4 mt-2">
+          <button type="submit"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-all">
+            {{ isEditMode ? 'Actualizar Tema' : 'Crear Tema' }}
+          </button>
+          <button v-if="isEditMode" type="button" @click="cancelEdit"
+            class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-all">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
 
-    <!-- Listado de temas -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="tema in temas" :key="tema.id" class="border p-4 rounded shadow">
-        <h2 class="text-xl font-semibold">{{ tema.nombre }}</h2>
-        <div class="w-8 h-8 my-2" :style="{ backgroundColor: tema.color }"></div>
+    <!-- Lista de Temas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="tema in temas" :key="tema.id" class="bg-white rounded-xl shadow-md p-5 flex flex-col justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">{{ tema.nombre }}</h3>
+          <div class="w-full h-3 mt-3 rounded" :style="{ backgroundColor: tema.color }"></div>
+        </div>
 
-        <button @click="editTema(tema)" class="bg-yellow-400 text-white px-2 py-1 rounded mr-2">
-          Editar
-        </button>
-        <button @click="deleteTema(tema.id)" class="bg-red-500 text-white px-2 py-1 rounded">
-          Eliminar
-        </button>
+        <!-- Asegúrate de tener esto en tu componente, dentro del <template> -->
+
+        <div class="mt-4 flex justify-end gap-2">
+          <!-- Botón Editar -->
+          <button @click="editTema(tema)"
+            class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-white text-sm px-4 py-2 rounded-lg transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.5-9.5a2.121 2.121 0 013 3L12 17H9v-3l8.5-8.5z" />
+            </svg>
+            Editar
+          </button>
+
+          <!-- Botón Eliminar -->
+          <button @click="deleteTema(tema.id)"
+            class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 012 2v0a2 2 0 01-2 2H7a2 2 0 01-2-2v0a2 2 0 012-2h10z" />
+            </svg>
+            Eliminar
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
 
+
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore';
+
 
 interface Tema {
   id: number
   nombre: string
   color: string
+
 }
 
 interface TemaForm {
@@ -64,10 +96,12 @@ export default defineComponent({
     const form = ref<TemaForm>({ nombre: '', color: '#000000' })
     const isEditMode = ref(false)
     const editId = ref<number | null>(null)
+    const authStore = useAuthStore();
+    const usuarioId = authStore.id;
 
     const fetchTemas = async () => {
       try {
-        const response = await axios.get('/api/tema')
+        const response = await axios.get(`/api/tema/${usuarioId}`)
         temas.value = response.data
       } catch (error) {
         console.error('Error al obtener los temas', error)
@@ -140,4 +174,3 @@ export default defineComponent({
   }
 })
 </script>
-
