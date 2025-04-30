@@ -64,24 +64,21 @@
             Eliminar
           </button>
         </div>
-
       </div>
     </div>
   </div>
 </template>
 
-
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/authStore';
-
+import { useAuthStore } from '@/stores/authStore'
+import Swal from 'sweetalert2'
 
 interface Tema {
   id: number
   nombre: string
   color: string
-
 }
 
 interface TemaForm {
@@ -96,15 +93,26 @@ export default defineComponent({
     const form = ref<TemaForm>({ nombre: '', color: '#000000' })
     const isEditMode = ref(false)
     const editId = ref<number | null>(null)
-    const authStore = useAuthStore();
-    const usuarioId = authStore.id;
+    const authStore = useAuthStore()
+    const usuarioId = authStore.id
 
     const fetchTemas = async () => {
       try {
-        const response = await axios.get(`/api/tema/${usuarioId}`)
-        temas.value = response.data
+        const Temaresponse = await axios.get(`https://localhost:7062/api/tema/usuario/${usuarioId}`)
+        temas.value = Temaresponse.data
+        Swal.fire({
+          icon: 'success',
+          title: 'Temas cargados',
+          showConfirmButton: false,
+          timer: 1500,
+        })
       } catch (error) {
         console.error('Error al obtener los temas', error)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al cargar temas',
+          text: 'Verifica tu conexión o intenta más tarde',
+        })
       }
     }
 
@@ -112,20 +120,72 @@ export default defineComponent({
       if (isEditMode.value && editId.value !== null) {
         // Actualizar
         try {
-          await axios.put(`/api/tema/${editId.value}`, form.value)
+          console.log(`✏️ Enviando actualización del tema ID ${editId.value}:`, form.value)
+          const response = await axios.put(`https://localhost:7062/api/tema/${editId.value}`, {
+            ...form.value,
+            usuarioId,
+          })
+          console.log('✅ Respuesta al actualizar:', response.data)
           await fetchTemas()
           resetForm()
-        } catch (error) {
-          console.error('Error al actualizar el tema', error)
+          Swal.fire({
+            icon: 'success',
+            title: 'Tema actualizado',
+            showConfirmButton: false,
+            timer: 1500,
+          })
+        } catch (error: any) {
+          console.error('❌ Error al actualizar el tema:', error)
+
+          const mensaje = error?.response?.data?.message || ''
+          if (mensaje.toLowerCase().includes('ya existe un tema')) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Nombre duplicado',
+              text: 'Ya existe un tema con ese nombre. Por favor elige otro.',
+            })
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error al actualizar tema',
+              text: 'Ocurrió un problema al actualizar el tema.',
+            })
+          }
         }
       } else {
         // Crear
         try {
-          await axios.post('/api/tema', form.value)
+          console.log('📦 Enviando nuevo tema al servidor:', form.value)
+          const response = await axios.post('https://localhost:7062/api/tema', {
+            ...form.value,
+            usuarioId, // Asegúrate de incluir el usuarioId si tu API lo necesita
+          })
+          console.log('✅ Respuesta al crear tema:', response.data)
           await fetchTemas()
           resetForm()
-        } catch (error) {
-          console.error('Error al crear el tema', error)
+          Swal.fire({
+            icon: 'success',
+            title: 'Tema creado',
+            showConfirmButton: false,
+            timer: 1500,
+          })
+        } catch (error: any) {
+          console.error('❌ Error al crear el tema:', error)
+
+          const mensaje = error?.response?.data?.message || ''
+          if (mensaje.toLowerCase().includes('ya existe un tema')) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Nombre duplicado',
+              text: 'Ya existe un tema con ese nombre. Por favor elige otro.',
+            })
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error al crear tema',
+              text: 'No se pudo guardar el tema.',
+            })
+          }
         }
       }
     }
@@ -142,12 +202,35 @@ export default defineComponent({
     }
 
     const deleteTema = async (id: number) => {
-      if (confirm('¿Estás seguro de eliminar este tema?')) {
+      const confirmacion = await Swal.fire({
+        title: '¿Eliminar este tema?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+      })
+      if (confirmacion.isConfirmed) {
         try {
-          await axios.delete(`/api/tema/${id}`)
+          console.log(`🗑️ Enviando solicitud para eliminar tema ID ${id}...`)
+          const response = await axios.delete(`https://localhost:7062/api/tema/${id}`)
+          console.log('✅ Respuesta al eliminar tema:', response.data)
           await fetchTemas()
+          Swal.fire({
+            icon: 'success',
+            title: 'Tema eliminado',
+            showConfirmButton: false,
+            timer: 1500
+          });
         } catch (error) {
-          console.error('Error al eliminar el tema', error)
+          console.error('❌ Error al eliminar el tema:', error)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al eliminar',
+            text: 'No se pudo eliminar el tema.',
+          });
         }
       }
     }
@@ -171,6 +254,6 @@ export default defineComponent({
       cancelEdit,
       deleteTema,
     }
-  }
+  },
 })
 </script>
