@@ -39,6 +39,183 @@
   const currentUserId = authStore.id // Esto reemplaza tu const currentUserId = 1
 
   // Función para exportar a PDF
+  const exportToPDF = async () => {
+  try {
+    // Mostrar diálogo para seleccionar semana
+    const { value: weekNumber } = await Swal.fire({
+      title: 'Seleccionar semana',
+      html: `
+        <div class="swal2-form-container">
+          <div class="swal2-form-group">
+            <label for="semana">Número de semana</label>
+            <input id="semana" type="week" class="swal2-input">
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Generar PDF',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4F46E5',
+      cancelButtonColor: '#6B7280',
+      preConfirm: () => {
+        return (document.getElementById('semana') as HTMLInputElement).value
+      }
+    })
+
+    if (!weekNumber) return
+
+    // Obtener fechas de inicio y fin de la semana seleccionada
+    const [year, week] = weekNumber.split('-W')
+    const fechaInicioSemana = new Date(year, 0, 1 + (week - 1) * 7)
+    const fechaFinSemana = new Date(fechaInicioSemana)
+    fechaFinSemana.setDate(fechaFinSemana.getDate() + 6) // 6 días después para completar la semana
+
+    // Ajustar para que incluya solo días laborales (Lunes a Viernes)
+    const fechaInicio = new Date(fechaInicioSemana)
+    if (fechaInicio.getDay() === 0) fechaInicio.setDate(fechaInicio.getDate() + 1) // Si es domingo, empezar el lunes
+    else if (fechaInicio.getDay() === 6) fechaInicio.setDate(fechaInicio.getDate() + 2) // Si es sábado, empezar el lunes
+
+    const fechaFin = new Date(fechaFinSemana)
+    if (fechaFin.getDay() === 0) fechaFin.setDate(fechaFin.getDate() - 2) // Si es domingo, terminar el viernes
+    else if (fechaFin.getDay() === 6) fechaFin.setDate(fechaFin.getDate() - 1) // Si es sábado, terminar el viernes
+
+    // Obtener eventos del calendario
+    const calendar = calendarRef.value.getApi()
+    const allEvents = calendar.getEvents()
+
+    // Filtrar eventos por el rango seleccionado
+    const events = allEvents.filter(event => {
+      const eventDate = new Date(event.start)
+      return eventDate >= fechaInicio && eventDate <= fechaFin
+    })
+
+    // Si no hay eventos, mostrar mensaje
+    if (events.length === 0) {
+      await Swal.fire({
+        icon: 'info',
+        title: 'No hay actividades',
+        text: 'No hay actividades en la semana seleccionada',
+        confirmButtonColor: '#4F46E5'
+      })
+      return
+    }
+
+    // Definir estructura de la tabla
+    const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+    const timeSlots = [
+      '07:00 - 08:00', '08:00 - 09:00', '09:00 - 10:00', '10:00 - 11:00',
+      '11:00 - 12:00', '12:00 - 13:00', '13:00 - 14:00', '14:00 - 15:00',
+      '15:00 - 16:00', '16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00',
+      '19:00 - 20:00', '20:00 - 21:00', '21:00 - 21:40'
+    ]
+
+    // Crear estructura de datos para la tabla
+    const tableData = {}
+    timeSlots.forEach(time => {
+      tableData[time] = {
+        Lunes: '', Martes: '', Miércoles: '', Jueves: '', Viernes: ''
+      }
+    })
+
+    // Llenar la tabla con los eventos
+    events.forEach(event => {
+      const dayName = format(event.start, 'EEEE', { locale: es })
+      const formattedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1)
+      const timeRange = `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`
+
+      // Encontrar el slot de tiempo correspondiente
+      const matchingSlot = timeSlots.find(slot => {
+        const [slotStart] = slot.split(' - ')
+        return timeRange.startsWith(slotStart)
+      })
+
+      if (matchingSlot && daysOfWeek.includes(formattedDay)) {
+        // Obtener detalles extendidos del evento
+        const extendedProps = event.extendedProps || {}
+        const tema = temas.value.find(t => t.id === extendedProps.temaId)
+        const grupo = grupos.value.find(g => g.id === extendedProps.grupoId)
+
+        tableData[matchingSlot][formattedDay] = `
+          <div style="margin: 3px 0; font-size: 10px; line-height: 1.3;">
+            <strong style="font-size: 11px; display: block;">${event.title}</strong>
+            ${tema ? `<span style="color: #4F46E5;">Tema:</span> ${tema.nombre}<br>` : ''}
+            ${grupo ? `<span style="color: #4F46E5;">Grupo:</span> ${grupo.nombre}<br>` : ''}
+            ${extendedProps.lugar ? `<span style="color: #4F46E5;">Lugar:</span> ${extendedProps.lugar}` : ''}
+          </div>
+        `
+      }
+    })
+
+    // Generar HTML para la tabla
+    let tableRows = ''
+    timeSlots.forEach(time => {
+      tableRows += `
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 5px; font-weight: bold; font-size: 11px; width: 10%;">${time}</td>
+          ${daysOfWeek.map(day => `
+            <td style="border: 1px solid #ddd; padding: 5px; vertical-align: top; font-size: 10px;">${tableData[time][day] || '-'}</td>
+          `).join('')}
+        </tr>
+      `
+    })
+
+    // Formatear fechas para mostrar
+    const fechaInicioFormatted = format(fechaInicio, 'PPPP', { locale: es })
+    const fechaFinFormatted = format(fechaFin, 'PPPP', { locale: es })
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 10px;">
+        <h1 style="text-align: center; color: #4F46E5; margin-bottom: 5px; font-size: 16px;">Horario Semanal</h1>
+        <p style="text-align: center; margin-bottom: 10px; font-size: 12px;">
+          Semana del ${fechaInicioFormatted} al ${fechaFinFormatted}
+        </p>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px;">
+          <thead>
+            <tr style="background-color: #4F46E5; color: white;">
+              <th style="border: 1px solid #ddd; padding: 8px; width: 10%;">Hora</th>
+              ${daysOfWeek.map(day => `
+                <th style="border: 1px solid #ddd; padding: 8px;">${day}</th>
+              `).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <p style="text-align: right; margin-top: 10px; font-size: 10px; color: #666;">
+          Generado el ${format(new Date(), 'PPPP', { locale: es })}
+        </p>
+      </div>
+    `
+
+    // Configuración para html2pdf
+    const options = {
+      margin: 5,
+      filename: `horario-semana-${weekNumber}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'landscape',
+        hotfixes: ['px_scaling']
+      }
+    }
+
+    // Generar el PDF
+    html2pdf().from(htmlContent).set(options).save()
+
+  } catch (error) {
+    console.error('Error al generar PDF:', error)
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo generar el PDF',
+      confirmButtonColor: '#DC2626'
+    })
+  }
+}
 
 
   const viewTaskDetails = async (task) => {
