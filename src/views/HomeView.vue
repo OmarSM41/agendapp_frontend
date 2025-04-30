@@ -4,7 +4,7 @@
     <section class="container mx-auto px-6 py-24 text-center animate-fade-in">
       <div class="max-w-3xl mx-auto">
         <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-          <span class="bg-gradient-to-r from-amber-600 to-orange-500 text-transparent bg-clip-text">HorarioAPP</span>
+          <span class="bg-gradient-to-r from-amber-600 to-orange-500 text-transparent bg-clip-text">AppHorarios</span>
         </h1>
         <p class="text-lg md:text-2xl text-gray-700 mb-10">
           Organiza tareas, actividades y asistencia de tu equipo fácilmente y en tiempo real.
@@ -34,7 +34,7 @@
       <div class="container mx-auto px-6">
         <div class="max-w-4xl mx-auto text-center">
           <h2 class="text-4xl font-extrabold text-gray-900 mb-12">
-            ¿Qué es <span class="text-amber-600">HorarioAPP</span>?
+            ¿Qué es <span class="text-amber-600">AppHorarios</span>?
           </h2>
 
           <div class="grid md:grid-cols-3 gap-8 text-left">

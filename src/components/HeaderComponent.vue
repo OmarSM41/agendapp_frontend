@@ -3,7 +3,7 @@
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
       <!-- Logo y nombre -->
       <div class="flex items-center space-x-3">
-        <a href="/" class="text-xl font-bold text-white">HorarioAPP</a>
+        <a href="/" class="text-xl font-bold text-white">AppHorarios</a>
       </div>
 
       <!-- Navegación principal -->
