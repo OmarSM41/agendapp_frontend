@@ -12,6 +12,11 @@
           placeholder="Nombre del grupo"
           class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
+        <input
+          v-model="colorNuevoGrupo"
+          type="color"
+          class="w-16 h-10 rounded border cursor-pointer"
+        />
         <button
           @click="crearGrupo"
           class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg transition-all flex items-center gap-2"
@@ -29,15 +34,22 @@
         class="bg-white rounded-xl shadow-md p-5 flex flex-col justify-between"
       >
         <div>
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">Grupo #{{ grupo.id }}</h3>
-          <div v-if="grupoEditando === grupo.id">
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Grupo</h3>
+          <div v-if="grupoEditando === grupo.id" class="space-y-2">
             <input
               v-model="nombreEditado"
               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+            <input
+              v-model="colorEditado"
+              type="color"
+              class="w-16 h-10 rounded border cursor-pointer"
+            />
+
           </div>
           <div v-else>
             <p class="text-gray-700">{{ grupo.nombre }}</p>
+            <div class="w-full h-3 mt-3 rounded" :style="{ backgroundColor: grupo.color }"></div>
           </div>
         </div>
 
@@ -85,8 +97,10 @@ import { Pencil, Trash2, Save, X, Plus } from 'lucide-vue-next'
 
 const grupos = ref([])
 const nuevoGrupo = ref('')
+const colorNuevoGrupo = ref('#000000')
 const grupoEditando = ref<number | null>(null)
 const nombreEditado = ref('')
+const colorEditado = ref('#000000')
 
 const cargarGrupos = async () => {
   try {
@@ -103,8 +117,12 @@ const crearGrupo = async () => {
     return Swal.fire('Advertencia', 'El nombre del grupo es requerido', 'warning')
   }
   try {
-    await axios.post('https://localhost:7062/api/Grupo', { nombre: nuevoGrupo.value })
+    await axios.post('https://localhost:7062/api/Grupo', {
+      nombre: nuevoGrupo.value,
+      color: colorNuevoGrupo.value,
+    })
     nuevoGrupo.value = ''
+    colorNuevoGrupo.value = '#000000'
     await cargarGrupos()
     Swal.fire('Éxito', 'Grupo creado correctamente', 'success')
   } catch (error: any) {
@@ -140,6 +158,7 @@ const eliminarGrupo = async (id: number) => {
 const editarGrupo = (grupo: any) => {
   grupoEditando.value = grupo.id
   nombreEditado.value = grupo.nombre
+  colorEditado.value = grupo.color
 }
 
 const actualizarGrupo = async (id: number) => {
@@ -147,9 +166,13 @@ const actualizarGrupo = async (id: number) => {
     return Swal.fire('Advertencia', 'El nombre no puede estar vacío', 'warning')
   }
   try {
-    await axios.put(`https://localhost:7062/api/Grupo/${id}`, { nombre: nombreEditado.value })
+    await axios.put(`https://localhost:7062/api/Grupo/${id}`, {
+      nombre: nombreEditado.value,
+      color: colorEditado.value,
+    })
     grupoEditando.value = null
     nombreEditado.value = ''
+    colorEditado.value = '#000000'
     await cargarGrupos()
     Swal.fire('Éxito', 'Grupo actualizado correctamente', 'success')
   } catch (error: any) {
