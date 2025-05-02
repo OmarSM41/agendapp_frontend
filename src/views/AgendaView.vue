@@ -357,7 +357,6 @@ const saveTask = async () => {
     await axios.post('https://localhost:7062/api/Horario', nuevaTarea)
 
     tasks.value.push({
-      
       fecha: selectedDate.value,
       dia: selectedDay.value,
       hora: formValues.hora,
