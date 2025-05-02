@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import esLocale from '@fullcalendar/core/locales/es'
 import axios from 'axios'
 import { format, parseISO } from 'date-fns'
-import { es, id } from 'date-fns/locale'
+import { es } from 'date-fns/locale'
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import Swal from 'sweetalert2'
@@ -19,8 +19,6 @@ import {
   Eye as IconEye,
   Trash2Icon,
 } from 'lucide-vue-next'
-import { nombre } from '../utils/auth';
-
 
 const authStore = useAuthStore()
 
