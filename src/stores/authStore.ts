@@ -9,6 +9,9 @@ export const useAuthStore = defineStore('auth', {
     id:         null as number | null,   // ID del usuario
     isAuthenticated: false,
   }),
+  getters: {
+    isLoggedIn: (state) => state.isAuthenticated && !!state.token,
+  },
   actions: {
     async login(correo: string, contraseña: string) {
       try {
