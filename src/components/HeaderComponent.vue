@@ -15,6 +15,7 @@
           <a href="/agenda" class="text-white hover:text-purple-100 font-medium">Agenda</a>
           <a href="/temas" class="text-white hover:text-purple-100 font-medium">Temas</a>
           <a href="/grupos" class="text-white hover:text-purple-100 font-medium">Grupos</a>
+          <a href="/Materia" class="text-white hover:text-purple-100 font-medium">Materia</a>
         </template>
       </nav>
 
