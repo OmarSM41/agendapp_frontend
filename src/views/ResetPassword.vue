@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -113,7 +113,7 @@ const handleSubmit = async () => {
     }
 
     passwordReset.value = true
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error:', err.message)
     error.value = err.message
   } finally {
